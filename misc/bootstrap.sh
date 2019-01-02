@@ -64,5 +64,5 @@ echo "Starting server …"
 tail --follow --retry /var/log/nginx/*.log /var/log/cron/owncloud.log &
 
 /usr/sbin/cron -f &
-/etc/init.d/php5-fpm start
+/etc/init.d/php7.0-fpm start
 /etc/init.d/nginx start

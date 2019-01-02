@@ -12,19 +12,19 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     nginx \
     openssl \
     php-apcu \
-    php7.2-apcu \
-    php7.2-cli \
-    php7.2-curl \
-    php7.2-fpm \
-    php7.2-gd \
-    php7.2-gmp \
-    php7.2-imagick \
-    php7.2-intl \
-    php7.2-ldap \
-    php7.2-mcrypt \
-    php7.2-mysqlnd \
-    php7.2-pgsql \
-    php7.2-sqlite \
+    php7.0-apcu \
+    php7.0-cli \
+    php7.0-curl \
+    php7.0-fpm \
+    php7.0-gd \
+    php7.0-gmp \
+    php7.0-imagick \
+    php7.0-intl \
+    php7.0-ldap \
+    php7.0-mcrypt \
+    php7.0-mysqlnd \
+    php7.0-pgsql \
+    php7.0-sqlite \
     smbclient \
     sudo \
     wget
@@ -54,8 +54,8 @@ ADD misc/bootstrap.sh misc/occ misc/oc-install-3party-apps /usr/local/bin/
 ADD configs/3party_apps.conf configs/nginx_ssl.conf configs/nginx.conf configs/docker_image_owncloud.config.php configs/owncloud_autoconfig.php /root/
 
 ## Fixed warning in admin panel getenv('PATH') == '' for ownCloud 8.1.
-# RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php7.2/fpm/pool.d/www.conf
-RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php/7.2/fpm/pool.d/www.conf
+# RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php7.0/fpm/pool.d/www.conf
+RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php/7.0/fpm/pool.d/www.conf
 
 ADD configs/cron.conf /etc/oc-cron.conf
 RUN crontab /etc/oc-cron.conf

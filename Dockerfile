@@ -54,7 +54,8 @@ ADD misc/bootstrap.sh misc/occ misc/oc-install-3party-apps /usr/local/bin/
 ADD configs/3party_apps.conf configs/nginx_ssl.conf configs/nginx.conf configs/docker_image_owncloud.config.php configs/owncloud_autoconfig.php /root/
 
 ## Fixed warning in admin panel getenv('PATH') == '' for ownCloud 8.1.
-RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php7.2/fpm/pool.d/www.conf
+# RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php7.2/fpm/pool.d/www.conf
+RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php/7.2/fpm/pool.d/www.conf
 
 ADD configs/cron.conf /etc/oc-cron.conf
 RUN crontab /etc/oc-cron.conf

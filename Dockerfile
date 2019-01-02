@@ -12,13 +12,11 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     nginx \
     openssl \
     php-apcu \
-    php7.0-apcu \
     php7.0-cli \
     php7.0-curl \
     php7.0-fpm \
     php7.0-gd \
     php7.0-gmp \
-    php7.0-imagick \
     php7.0-intl \
     php7.0-ldap \
     php7.0-mcrypt \

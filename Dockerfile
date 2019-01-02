@@ -36,7 +36,7 @@ ENV OWNCLOUD_VERSION="10.0.10" \
 
 LABEL com.github.jchaney.owncloud.version="$OWNCLOUD_VERSION" \
   com.github.jchaney.owncloud.license="AGPL-3.0" \
-  com.github.jchaney.owncloud.url="https://github.com/audioscavenger/owncloud-LEMP"
+  com.github.jchaney.owncloud.url="https://github.com/audioscavenger/owncloud-lemp"
 
 RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys E3036906AD9F30807351FAC32D5D5E97F6978A26
 

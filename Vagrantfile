@@ -6,9 +6,9 @@
 
 Vagrant.configure("2") do |config|
   config.vm.provider "docker" do |docker|
-    docker.image = "jchaney/owncloud"
+    docker.image = "audioscavenger/owncloud-lemp"
     docker.name = "owncloud-dev"
-    docker.env = { TZ: 'Europe/Berlin', OWNCLOUD_IN_ROOTPATH: '1' }
+    docker.env = { TZ: 'America/New_York', OWNCLOUD_IN_ROOTPATH: '1' }
     docker.ports = ['80:80', '443:443']
 
   end

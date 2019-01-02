@@ -1,6 +1,6 @@
 <?php
 // Custom options for this Docker image.
-// https://github.com/jchaney/owncloud
+// https://github.com/audioscavenger/owncloud-lemp
 $CONFIG = array (
 
     // Memory caching backend configuration: APC user backend

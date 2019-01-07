@@ -9,7 +9,7 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
   apt-get install --assume-yes \
     bzip2 \
     cron \
-    nginx \
+    nginx-light \
     openssl \
     php-apcu \
     php7.0-cli \
@@ -36,17 +36,15 @@ LABEL com.github.jchaney.owncloud.version="$OWNCLOUD_VERSION" \
   com.github.jchaney.owncloud.license="AGPL-3.0" \
   com.github.jchaney.owncloud.url="https://github.com/audioscavenger/owncloud-lemp"
 
-RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys E3036906AD9F30807351FAC32D5D5E97F6978A26
+# RUN gpg --ke6yserver ha.pool.sks-keyservers.net --recv-keys E3036906AD9F30807351FAC32D5D5E97F6978A26
 
-RUN wget --no-verbose --output-document /tmp/oc.tar.bz2 https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
-  wget --no-verbose --output-document /tmp/oc.tar.bz2.asc https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2.asc
+RUN wget --no-verbose --output-document /tmp/oc.tar.bz2 https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2
 
 RUN mkdir --parent /var/www/owncloud/apps_persistent /owncloud /var/log/cron && \
-  gpg --verify /tmp/oc.tar.bz2.asc && \
   tar --no-same-owner --directory /var/www/ --extract --file /tmp/oc.tar.bz2 && \
   ln --symbolic --force /owncloud/config.php /var/www/owncloud/config/config.php && \
   ln --symbolic --force /owncloud/docker_image_owncloud.config.php /var/www/owncloud/config/docker_image_owncloud.config.php && \
-  rm /tmp/oc.tar.bz2 /tmp/oc.tar.bz2.asc
+  rm /tmp/oc.tar.bz2
 
 ADD misc/bootstrap.sh misc/occ misc/oc-install-3party-apps /usr/local/bin/
 ADD configs/3party_apps.conf configs/nginx_ssl.conf configs/nginx.conf configs/docker_image_owncloud.config.php configs/owncloud_autoconfig.php /root/

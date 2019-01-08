@@ -9,23 +9,16 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
   apt-get install --assume-yes \
     bzip2 \
     cron \
-    nginx-light \
+    net-tools \
+    nvi
+    sudo \
+    wget \
+    smbclient \
+    nginx-extras \
     openssl \
     php-apcu \
-    php7.0-cli \
-    php7.0-curl \
-    php7.0-fpm \
-    php7.0-gd \
-    php7.0-gmp \
-    php7.0-intl \
-    php7.0-ldap \
-    php7.0-mcrypt \
-    php7.0-mysqlnd \
-    php7.0-pgsql \
-    php7.0-sqlite \
-    smbclient \
-    sudo \
-    wget
+    php-apcu \
+    php-fpm
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
 ENV OWNCLOUD_VERSION="10.0.10" \
@@ -50,7 +43,6 @@ ADD misc/bootstrap.sh misc/occ misc/oc-install-3party-apps /usr/local/bin/
 ADD configs/3party_apps.conf configs/nginx_ssl.conf configs/nginx.conf configs/docker_image_owncloud.config.php configs/owncloud_autoconfig.php /root/
 
 ## Fixed warning in admin panel getenv('PATH') == '' for ownCloud 8.1.
-# RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php7.0/fpm/pool.d/www.conf
 RUN echo 'env[PATH] = /usr/local/bin:/usr/bin:/bin' >> /etc/php/7.0/fpm/pool.d/www.conf
 
 ADD configs/cron.conf /etc/oc-cron.conf

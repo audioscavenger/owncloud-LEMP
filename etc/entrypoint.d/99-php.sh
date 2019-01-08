@@ -30,4 +30,10 @@ declare -x PHP_PM_MAX_SPARE_SERVERS
 declare -x PHP_PM_MAX_REQUESTS
 [[ -z "${PHP_PM_MAX_REQUESTS}" ]] && PHP_PM_MAX_REQUESTS="16384"
 
+declare -x PHP_MEMORY_LIMIT
+[[ -z "${PHP_MEMORY_LIMIT}" ]] && PHP_MEMORY_LIMIT="128M"
+
+declare -x PHP_APC_SHM_SIZE
+[[ -z "${PHP_APC_SHM_SIZE}" ]] && PHP_APC_SHM_SIZE="1M"
+
 true

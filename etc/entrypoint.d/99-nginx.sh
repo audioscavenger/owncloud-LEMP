@@ -7,7 +7,7 @@ declare -x NGINX_ENABLE_TEST_URL
 [[ -z "${NGINX_ENABLE_TEST_URL}" ]] && NGINX_ENABLE_TEST_URL="true"
 
 declare -x NGINX_ENABLED_TEST_URL
-[[ ${NGINX_ENABLE_TEST_URL} ]] && NGINX_ENABLED_TEST_URL="#rewrite ^ /index.php;" || NGINX_ENABLED_TEST_URL="rewrite ^ /index.php;"
+${NGINX_ENABLE_TEST_URL} && NGINX_ENABLED_TEST_URL="#rewrite ^ /index.php;" || NGINX_ENABLED_TEST_URL="rewrite ^ /index.php;"
 
 declare -x NGINX_LISTEN
 [[ -z "${NGINX_LISTEN}" ]] && NGINX_LISTEN="8081"
@@ -48,7 +48,7 @@ declare -x NGINX_LOG_FORMAT
 declare -x NGINX_LOG_LEVEL
 [[ -z "${NGINX_LOG_LEVEL}" ]] && NGINX_LOG_LEVEL="crit"
 
-if [[ ${NGINX_ENABLE_LOG} ]]; then
+if ${NGINX_ENABLE_LOG}; then
   NGINX_ACCESS_LOG="${NGINX_DEFAULT_ACCESS_LOG} ${NGINX_LOG_FORMAT}"
   NGINX_ERROR_LOG="${NGINX_DEFAULT_ERROR_LOG} ${NGINX_LOG_LEVEL}"
 fi

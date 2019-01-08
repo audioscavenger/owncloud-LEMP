@@ -7,7 +7,7 @@ gomplate \
 
 echo "Writing nginx default site..."
 gomplate \
-  -f /etc/templates/default.conf \
+  -f /etc/templates/default \
   -o /etc/nginx/sites-available/default
 
 true

@@ -62,13 +62,16 @@ COPY rootfs /
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 COPY configs/ /
 
+# Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
 RUN /bin/rm -f /etc/cron.daily/apache2 /var/log/*log* && \
 /bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
 /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
 /bin/ln -sf /usr/bin/server.nginx /usr/bin/server && \
+/bin/ln -sf /etc/environment /etc/default/php-fpm7.2 && \
+/bin/mkdir -p /run/php && /bin/chown www-data:www-data /run/php && \
 /bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc /usr/bin/server.*
 
-# each CMD = one temporary container
+# each CMD = one temporary container!
 # CMD ["/bin/rm", "/etc/cron.daily/apache2"]
 # CMD ["/bin/ln", "-sf", "/usr/share/zoneinfo/America/New_York", "/etc/localtime"]
 # CMD ["/bin/ln", "-sf", "/etc/php/7.2/mods-available/owncloud.ini", "/etc/php/7.2/fpm/conf.d/99-owncloud.ini"]

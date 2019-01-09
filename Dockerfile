@@ -62,13 +62,22 @@ COPY rootfs /
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 COPY configs/ /
 
-CMD ["/bin/rm", "/etc/cron.daily/apache2"]
-CMD ["/bin/ln", "-sf", "/usr/share/zoneinfo/America/New_York", "/etc/localtime"]
-CMD ["/bin/ln", "-sf", "/etc/php/7.2/mods-available/owncloud.ini", "/etc/php/7.2/fpm/conf.d/99-owncloud.ini"]
-CMD ["/bin/ln", "-sf", "/usr/bin/server.nginx", "/usr/bin/server"]
-CMD ["/bin/chmod", "755", "/etc/owncloud.d/*", "/etc/entrypoint.d/*"]
-CMD ["/bin/chmod", "755", "/root/.bashrc"]
+RUN /bin/rm -f /etc/cron.daily/apache2 && \
+/bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
+/bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
+/bin/ln -sf /usr/bin/server.nginx /usr/bin/server && \
+/bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* && \
+/bin/chmod 755 /root/.bashrc
+
+# each CMD = one temporary container
+# CMD ["/bin/rm", "/etc/cron.daily/apache2"]
+# CMD ["/bin/ln", "-sf", "/usr/share/zoneinfo/America/New_York", "/etc/localtime"]
+# CMD ["/bin/ln", "-sf", "/etc/php/7.2/mods-available/owncloud.ini", "/etc/php/7.2/fpm/conf.d/99-owncloud.ini"]
+# CMD ["/bin/ln", "-sf", "/usr/bin/server.nginx", "/usr/bin/server"]
+# CMD ["/bin/chmod", "755", "/etc/owncloud.d/*", "/etc/entrypoint.d/*"]
+# CMD ["/bin/chmod", "755", "/root/.bashrc"]
 
 RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
 chmod g+w /var/www/owncloud
 
+ENTRYPOINT ["/usr/bin/entrypoint","server"]

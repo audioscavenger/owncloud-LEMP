@@ -1,5 +1,6 @@
 ## https://doc.owncloud.com/server/administration_manual/installation/nginx_configuration.html
 ## The configuration assumes that ownCloud is installed in /var/www/owncloud and is accessed via http(s)://cloud.example.com.
+## @todo: add a possible SSL configuration with certificates autoconfig and a real doc
 
 upstream php-handler {
   server unix:/var/run/php/php7.2-fpm.sock;

@@ -62,7 +62,7 @@ COPY rootfs /
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 COPY configs/ /
 
-RUN /bin/rm -f /etc/cron.daily/apache2 && \
+RUN /bin/rm -f /etc/cron.daily/apache2 /var/log/*log* && \
 /bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
 /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
 /bin/ln -sf /usr/bin/server.nginx /usr/bin/server && \
@@ -79,4 +79,4 @@ RUN /bin/rm -f /etc/cron.daily/apache2 && \
 RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
 chmod g+w /var/www/owncloud
 
-ENTRYPOINT ["/usr/bin/entrypoint","server"]
+ENTRYPOINT ["/usr/bin/owncloud","server"]

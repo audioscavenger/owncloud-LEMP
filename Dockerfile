@@ -66,8 +66,7 @@ RUN /bin/rm -f /etc/cron.daily/apache2 && \
 /bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
 /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
 /bin/ln -sf /usr/bin/server.nginx /usr/bin/server && \
-/bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* && \
-/bin/chmod 755 /root/.bashrc
+/bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc /usr/bin/server.*
 
 # each CMD = one temporary container
 # CMD ["/bin/rm", "/etc/cron.daily/apache2"]

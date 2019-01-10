@@ -45,7 +45,6 @@ smbclient \
 openssl \
 nginx-extras \
 php-apcu \
-php-apcu \
 php-fpm \
 geoip-database \
 libgeoip1

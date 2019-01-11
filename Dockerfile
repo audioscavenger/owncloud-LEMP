@@ -81,4 +81,7 @@ RUN /bin/rm -f /etc/cron.daily/apache2 /var/log/*log* && \
 RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
 chmod g+w /var/www/owncloud
 
-ENTRYPOINT ["/usr/bin/owncloud","server"]
+VOLUME ["/mnt/data"]
+EXPOSE 8081
+ENTRYPOINT ["/usr/bin/entrypoint"]
+CMD ["/usr/bin/owncloud", "server"]

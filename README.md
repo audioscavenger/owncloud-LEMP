@@ -1,188 +1,445 @@
-# docker-owncloud
+# ownCloud:LEMP Stack
+Managed by [audioscavenger/owncloud-lemp](https://github.com/audioscavenger/owncloud-lemp)
 
-[![Docker Stars](https://img.shields.io/docker/stars/jchaney/owncloud.svg)][this.project_docker_hub_url]
-[![Docker Pulls](https://img.shields.io/docker/pulls/jchaney/owncloud.svg)][this.project_docker_hub_url]
-[![ImageLayers Size](https://img.shields.io/imagelayers/image-size/jchaney/owncloud/latest.svg)][this.project_docker_hub_url]
-[![ImageLayers Layers](https://img.shields.io/imagelayers/layers/jchaney/owncloud/latest.svg)][this.project_docker_hub_url]
+## Presentation
+This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it is built from their base container. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB and Redis containers.
 
-Docker image for [ownCloud][].
+It features Nginx instead of apache2, which has been uninstalled from the image.
 
-**Maintainer wanted. Refer to https://github.com/jchaney/owncloud/issues/62**
+It is currently best used as a **backend** as only HTTP is enabled.
 
-The build instructions are tracked on [GitHub][this.project_github_url].
-[Automated builds][] are hosted on [Docker Hub][this.project_docker_hub_url].
+Note: "LEMP" is a language abuse as MySQL is not included in this image.
 
-## Why using this image
+# Features
+* **Superfast**
+  * Uses PHP7.2 with APCu and Zend OpCache for maximum performance:
+    * memcache.local = APCu user cache ([see why](https://www.it-cooking.com/technology/productivity/redis-vs-apcu-2018/))
+    * memcache.distributed = Redis
+    * memcache.locking = Redis
+  * Uses Mariadb MySQL container for better I/O against sqlite
+  * Listen to 127.0.0.1 instead of localhost, no dns resolution
 
-* It is directly based on Debian stable. No additional image layers which blow up the total image size and might by a security risk.
-* Uses [nginx][] as webserver.
-* [Hardened TLS](https://github.com/BetterCrypto/Applied-Crypto-Hardening/blob/master/src/configuration/Webservers/nginx/default-hsts) configuration.
-* Generates unique Diffie Hellman parameters to mitigate precomputation based attacks on common parameters. Refs: [Guide to Deploying Diffie-Hellman for TLS](https://weakdh.org/sysadmin.html).
-* Local caching enabled by default (APCu).
-  See https://owncloud.org/blog/making-owncloud-faster-through-caching/
-* Installs the ownCloud tarball directly from https://owncloud.org/ and it [securely](https://github.com/jchaney/owncloud/pull/12) verifies the GPG signature.
-* Makes installing of 3party apps easy and keeps them across updates.
-* The [`occ`][occ] command can be used just by typing `docker exec -ti $owncloud_container_name occ`.
-* ownCloud can only be updated by redeploying the container. No update via the web interface is possible. The ownCloud installation is fully contained in the container and not made persistent. This allows to make the ownCloud installation write protected for the Webserver and PHP which run as `www-data`.
-* Automated database update on ownCloud update during the startup of a redeployed/updated container.
+![APCu screenshot](https://www.it-cooking.com/wp-content/uploads/2019/01/APCu-docker-owncloud-lemp-oq10.png)
+![OPcache screenshot](https://www.it-cooking.com/wp-content/uploads/2019/01/op-ocp-docker-owncloud-lemp-oq10.png)
 
-## Getting the image
+* **Scalable**
+  * Uses Redis container for horizontal scaling
 
-You have two options to get the image:
+* **Monitoring Enabled**
+  * Comes with cutting edge tools to monitor cache and debug (can be disabled):
+    * apcu.php (from PHP Group)
+    * op-ocp.php (Zend OPcode cache monitor by _ck_)
+    * phpinfo.php
+    * environ.php (check local env is ok)
 
-1. Build it yourself with `make build`.
-2. Download it via `docker pull jchaney/owncloud` ([automated build][this.project_docker_hub_url]).
+* **Cutting Edge**
+  * Based on Ubuntu 18.04
+  * Automatic check & download of latest ownCloud version
 
-## ownCloud up and running
+* **Best Practices**
+  * Every last configuration has a variable attached
+  * Rebuild configuration files at each startup
+  * Easy filesystem management if you use docker volumes as shown
+  * Brain-dean network management with linked containers as shown
 
-Checkout the [Makefile][] for an example or just run `make owncloud` which will setup a ownCloud container instance (called "owncloud"). After that, just head over to [http://localhost/](http://localhost/) and give it a try. You can now create an admin account. For testing purposes you can use SQLite (but remember to use a real database in production).
 
-## Running ownCloud in production
+## Content
++ owncloud/base:bionic <-- owncloud/php <-- ubuntu:18.04
+- owncloud:latest (10.0.10)
+- nginx-extras
+- php7.2-fpm (128MB default)
+- APCu (1MB shm size default)
 
-Setup a separate container running your database server and link it to the ownCloud container.
-For running in production, you need to provide a TLS key and certificate. The
-Makefile defaults to `/etc/ssl/private/ssl-cert-snakeoil.key` and
-`/etc/ssl/certs/ssl-cert-snakeoil.pem`. Make sure those files exist or extend
-the Makefile (you can include this Makefile and overwrite some variables in
-your own Makefile).
-You might also want to change variables like
-`docker_owncloud_permanent_storage` to define where the persistent data will be
-stored.
-To generate self signed once you can run the following command:
+# How to use it
+Just follow the official instructions found at [Github - owncloud-docker/server](https://github.com/owncloud-docker/server).
 
-```Shell
-make-ssl-cert generate-default-snakeoil
+Remember that this container will currently serve HTTP only and must be used as a backend. You need to proxify it:
+
+host-Web-Server --> proxy_pass --> http://127.0.0.1:8001/
+
+
+# Launch with plain docker
+The use of docker volumes is highly recommended. It's so much easier than linking to actual host folders and you can always access the files anyway.
+
+## Install Mariadb + Redis
+```
+docker volume create owncloud_redis-test
+
+REDIS_NAME=redis-test
+docker run -d --name ${REDIS_NAME} \
+-e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
+-e REDIS_DATABASES=1 \
+--volume owncloud_redis-test:/var/lib/redis \
+webhippie/redis:latest
+
+docker volume create owncloud_mysql-test
+docker volume create owncloud_backup-test
+
+MARIADB_NAME=mariadb-test
+docker run -d --name ${MARIADB_NAME} \
+-e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
+-e MARIADB_ROOT_PASSWORD=owncloud \
+-e MARIADB_USERNAME=owncloud \
+-e MARIADB_PASSWORD=owncloud \
+-e MARIADB_DATABASE=owncloud \
+--volume owncloud_mysql-test:/var/lib/mysql \
+--volume owncloud_backup-test:/var/lib/backup \
+webhippie/mariadb:latest
 ```
 
-To setup ownCloud with [MariaDB] as backend, just run:
+## Install owncloud-lemp
+```
+docker volume create owncloud_files-test
 
-```Shell
-make owncloud-production
+OWNCLOUD_NAME=owncloud-lemp-test
+OWNCLOUD_VERSION=latest
+OWNCLOUD_DOMAIN=127.0.0.1
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+NGINX_PORT=8001     # use whatever host port you like here
+OWNCLOUD_VOLUME=owncloud_files-test
+
+docker run -d --name ${OWNCLOUD_NAME} \
+--link ${MARIADB_NAME}:db \
+--link ${REDIS_NAME}:redis \
+-p ${NGINX_PORT}:8081 \
+-e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
+-e OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN} \
+-e OWNCLOUD_DB_TYPE=mysql \
+-e OWNCLOUD_DB_NAME=owncloud \
+-e OWNCLOUD_DB_USERNAME=owncloud \
+-e OWNCLOUD_DB_PASSWORD=owncloud \
+-e OWNCLOUD_DB_HOST=db \
+-e OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME} \
+-e OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD} \
+-e OWNCLOUD_REDIS_ENABLED=true \
+-e OWNCLOUD_REDIS_HOST=${REDIS_NAME} \
+--volume ${OWNCLOUD_VOLUME}:/mnt/data \
+audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 ```
 
-In the initial ownCloud setup, you need to supply the database user, password, database name and database host which you can look up via:
+**Production**: disable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=false \`
 
-```Shell
-make owncloud-mariadb-get-pw
+## Follow logs
+`docker logs -f ${OWNCLOUD_NAME}`
+
+## Connect to it
+`docker exec -it ${OWNCLOUD_NAME} bash`
+
+# Built it yourself
+```
+git clone https://github.com/audioscavenger/owncloud-lemp
+cd owncloud-lemp
+wget https://download.owncloud.org/community/owncloud-10.0.10.tar.bz2
+wget https://github.com/owncloud/user_ldap/releases/download/v0.11.0/user_ldap.tar.gz
+docker build -t <whatever>/owncloud-lemp:<tag> .
 ```
 
-Note that this command also shows you the MariaDB root password which you need to write down because you will not be able to access it later (after you run `make owncloud-production` again to update the containers, the passwords will be different and not match the once which are actually used).
+# Useful resources
+* [Download ownCloud Client](https://owncloud.org/download/#owncloud-desktop-client-windows)
+* [ownCloud Release Schedule](https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule)
+* [ownCloud/server image](https://hub.docker.com/r/owncloud/server)
+* [Github maintainer](https://github.com/audioscavenger/owncloud-lemp)
 
-That should be it :smile:
+# Modifications from the official build
+## Packages removed:
+* apache2:
+  * apache2-bin
+  * apache2-data
+  * apache2-dbg
+  * apache2-dev
+  * apache2-doc
+  * apache2-ssl-dev
+  * apache2-suexec-custom
+  * apache2-suexec-pristine
+  * apache2-utils
+* vim
 
-## Update your container and ownCloud
+## Packages added:
+* net-tools
+* software-properties-common
+* nvi
+* nginx-extras
+* php-apcu
+* php-fpm
+* php7.2-fpm
 
-It is recommended to rebuild/pull this image on a regular basis and redeploy your ownCloud container(s) to get the latest security fixes.
-Note that ownCloud version jumps are uploaded to the `latest` tag of this image once they are tested. You might want to watch this repository to see when this happens.
+## Files added:
+* /usr/bin/server.apache2
+* /usr/bin/server.nginx
+* /etc/owncloud.d/46-php-fpm.sh
+* /etc/owncloud.d/51-nginx.sh
+* /etc/entrypoint.d/99-nginx.sh
+* /etc/entrypoint.d/99-php.sh
+* /etc/php/7.2/fpm/conf.d/99-owncloud.ini
 
-Once the ownCloud image is up-to-date, just run:
+* /var/www/html/apcu.php
+* /var/www/html/environ.php
+* /var/www/html/op-ocp.php
+* /var/www/html/phpinfo.php
 
-```Shell
-make owncloud-production
-```
+## Files modified:
+* /root/.bashrc
+* /etc/bash.bashrc
+* /etc/entrypoint.d/10-base.sh
+* /etc/templates/owncloud.ini
+* /usr/bin/server
 
-to update your container. ownCloud usually requires a database update when the version of ownCloud is bumped. This process [has been automated](/misc/bootstrap.sh) for this Docker image but remember that you are still in charge of making backups/snapshots prior to updates!
+* /etc/php/7.2/fpm/pool.d/www.conf
+* /etc/php/7.2/fpm/pool.d/www.custom.conf
+* /etc/nginx/sites-available/default
+* /var/www/owncloud/.user.ini
 
-## Installing 3party apps
-
-Just write the command(s) needed to install apps in a configuration file and make sure it is present as `/owncloud/3party_apps.conf` in your container.
-
-Checkout the [example configuration][3party_apps.conf] and the [install script][oc-install-3party-apps] for details.
-
-## docker-compose support
-
-You can also run this image with `docker-compose`. First you need to declare all env variables since `docker-compose` does not support (yet) default variables.
-
-```Shell
-# Where to store data and database ?
-export docker_owncloud_permanent_storage="~/owncloud_data"
-
-# SSL Certificates to use.
-export docker_owncloud_ssl_cert="../certs/cloud.cert"
-export docker_owncloud_ssl_key="../certs/cloud.key"
-
-# Servername
-export docker_owncloud_servername="localhost"
-
-export docker_owncloud_http_port="80"
-export docker_owncloud_https_port="443"
-export docker_owncloud_in_root_path="1"
-
-export docker_owncloud_mariadb_root_password=$(pwgen --secure 40 1)
-export docker_owncloud_mariadb_user_password=$(pwgen --secure 40 1)
-
-export image_owncloud="jchaney/owncloud"
-export image_mariadb="mysql"
-
-```
-
-Then:
-
-```Shell
-docker-compose up
-```
-
-That's all !
-
-## Related projects
-
-* [official docker repository for ownCloud](https://hub.docker.com/_/owncloud/)
-
-  Uses Apache as webserver and is based on the [official Docker PHP image](https://hub.docker.com/_/php/).
-
-* [l3iggs/owncloud](https://hub.docker.com/r/l3iggs/owncloud/)
-
-  Uses Apache as webserver and is based on a self build LAMP stack based on Arch Linux.
-
-* [Ansible role to install and manage ownCloud instances](https://github.com/debops/ansible-owncloud)
-
-  Automation framework for setting up ownCloud on any Debian based system. This offers much
-  more flexibility and is not limited to Docker. So you can setup a ownCloud
-  instance in a KVM virtual machine and/or a LXC container for example.
-
-  This role is part of the [DebOps](http://debops.org/) project which allows
-  you to automate all the steps mentioned above (setting up a Hypervisor host with
-  support for KVM and/or LXC, setting up the virtual machine/container and
-  installing Webserver/PHP/Database and finally ownCloud).
-
-  The real fun with this approach begins when you manage multiple instances
-  because Ansible and this role allow you to run actions like ownCloud updates
-  or enabling apps or the like on all your instances automatically.
-
-## Maintainer
-
-The current maintainer is [Robin `ypid` Schneider][ypid].
-
-List of previous maintainers:
-
-1. [Josh Chaney][jchaney]
-2. [silvio][]
-
+# Notes
 ## Problems
+None that I am aware of.
 
-* If you get "Command not found" for any of the programs used then install it (make sure you know what you are doing).
-
-  > Your distribution packages: You should find missing dependencies from the errors yourself. It's _your_ machine, you're supposed to know it.
-
-  Ref: https://bb.osmocom.org/trac/wiki/PreliminaryRequirements#Generalknowledge
+## Todo List
+- [x] install software
+- [x] configure frontend and backend
+- [x] test bandwidth and CPU usage with different sized folders
+- [x] max file size tested = 1GB
+- [x] commits and tests with new containers
+- [x] upload manually modified image
+- [x] reverse engineer Dockerfile
+- [x] rebuild from Dockerfile
+- [x] upload image built with Dockerfile
+- [ ] integrate with drone CI
+- [ ] offer SSL as frontend
+- [ ] offer SSL autoconfig with letsencrypt
 
 ## License
-
 This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].
 
-[ypid]: https://github.com/ypid
-[silvio]: https://github.com/silvio
-[jchaney]: https://github.com/jchaney
+# Debug and Variables list
+## Entrypoint
+* /usr/bin/owncloud
 
-[Makefile]: /Makefile
-[ownCloud]: https://owncloud.org/
-[occ]: https://doc.owncloud.org/server/8.1/admin_manual/configuration_server/occ_command.html
-[MariaDB]: https://mariadb.org/
-[nginx]: https://en.wikipedia.org/wiki/Nginx
+## Environment
+All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.
 
-[3party_apps.conf]: https://github.com/jchaney/owncloud/blob/master/configs/3party_apps.conf
-[oc-install-3party-apps]: https://github.com/jchaney/owncloud/blob/master/misc/oc-install-3party-apps
-[AGPLv3]: https://github.com/jchaney/owncloud/blob/master/LICENSE
-[this.project_docker_hub_url]: https://hub.docker.com/r/jchaney/owncloud/
-[this.project_github_url]: https://github.com/jchaney/owncloud
-[Automated builds]: https://docs.docker.com/docker-hub/builds/
+Below is a list of what you can customize, showing default values:
+
+```
+DB_ENV_CRON_ENABLED=true
+DB_ENV_MARIADB_DATABASE=owncloud
+DB_ENV_MARIADB_PASSWORD=owncloud
+DB_ENV_MARIADB_ROOT_PASSWORD=owncloud
+DB_ENV_MARIADB_USERNAME=owncloud
+DB_ENV_TERM=xterm
+DB_ENV_TZ=New_York
+DB_NAME=/owncloud-lemp-test/db
+DB_PORT=tcp://1.2.3.4:3306
+DB_PORT_3306_TCP=tcp://1.2.3.4:3306
+DB_PORT_3306_TCP_ADDR=1.2.3.4
+DB_PORT_3306_TCP_PORT=3306
+DB_PORT_3306_TCP_PROTO=tcp
+LANG=C
+NGINX_ACCESS_LOG=off
+NGINX_DEFAULT_ACCESS_LOG=/var/log/nginx/access.log
+NGINX_DEFAULT_ERROR_LOG=/var/log/nginx/error.log
+NGINX_ENABLED_TEST_URL=#rewrite ^ /index.php;
+NGINX_ENABLE_LOG=false
+NGINX_ENABLE_TEST_URL=true
+NGINX_ENTRYPOINT_INITIALIZED=true
+NGINX_ERROR_LOG=off
+NGINX_KEEP_ALIVE_TIMEOUT=65
+NGINX_LISTEN=8081
+NGINX_LOG_FORMAT=combined
+NGINX_LOG_LEVEL=crit
+NGINX_PID_FILE=/var/run/nginx.pid
+NGINX_ROOT=/var/www/owncloud
+NGINX_ROOT_ACME_CHALLENGE=/var/www/html
+NGINX_ROOT_TEST_URL=/var/www/html
+NGINX_RUN_GROUP=www-data
+NGINX_RUN_USER=www-data
+NGINX_SERVER_NAME=_
+NGINX_SERVER_SIGNATURE=Off
+NGINX_WORKER_CONNECTIONS=1024
+OLDPWD=/etc/owncloud.d
+OWNCLOUD_ACCESSLOG_LOCATION=/dev/stdout
+OWNCLOUD_ACCOUNTS_ENABLE_MEDIAL_SEARCH=
+OWNCLOUD_ADMIN_PASSWORD=admin
+OWNCLOUD_ADMIN_USERNAME=admin
+OWNCLOUD_ALLOW_USER_TO_CHANGE_DISPLAY_NAME=
+OWNCLOUD_APPSTORE_URL=
+OWNCLOUD_APPS_DISABLE=
+OWNCLOUD_APPS_ENABLE=
+OWNCLOUD_APPS_INSTALL=
+OWNCLOUD_APPS_UNINSTALL=
+OWNCLOUD_BACKGROUND_MODE=cron
+OWNCLOUD_BLACKLISTED_FILES=
+OWNCLOUD_CACHE_CHUNK_GC_TTL=
+OWNCLOUD_CACHE_PATH=
+OWNCLOUD_CHECK_FOR_WORKING_WELLKNOWN_SETUP=
+OWNCLOUD_CIPHER=
+OWNCLOUD_COMMENTS_MANAGER_FACTORY=
+OWNCLOUD_CORS_ALLOWED_DOMAINS=
+OWNCLOUD_CROND_ENABLED=true
+OWNCLOUD_CRON_LOG=
+OWNCLOUD_CSRF_DISABLED=
+OWNCLOUD_DAV_CHUNK_BASE_DIR=
+OWNCLOUD_DAV_ENABLE_ASYNC=
+OWNCLOUD_DB_FAIL=true
+OWNCLOUD_DB_HOST=db
+OWNCLOUD_DB_NAME=owncloud
+OWNCLOUD_DB_PASSWORD=owncloud
+OWNCLOUD_DB_PREFIX=oc_
+OWNCLOUD_DB_TIMEOUT=180
+OWNCLOUD_DB_TYPE=mysql
+OWNCLOUD_DB_USERNAME=owncloud
+OWNCLOUD_DEBUG=
+OWNCLOUD_DEFAULT_APP=
+OWNCLOUD_DEFAULT_LANGUAGE=en
+OWNCLOUD_DOMAIN=127.0.0.1
+OWNCLOUD_ENABLED_PREVIEW_PROVIDERS=
+OWNCLOUD_ENABLE_AVATARS=
+OWNCLOUD_ENABLE_CERTIFICATE_MANAGEMENT=
+OWNCLOUD_ENABLE_PREVIEWS=
+OWNCLOUD_ENTRYPOINT_INITIALIZED=true
+OWNCLOUD_ERRORLOG_LOCATION=/dev/stderr
+OWNCLOUD_EXCLUDED_DIRECTORIES=
+OWNCLOUD_FILELOCKING_ENABLED=true
+OWNCLOUD_FILELOCKING_TTL=
+OWNCLOUD_FILESYSTEM_CACHE_READONLY=
+OWNCLOUD_FILESYSTEM_CHECK_CHANGES=
+OWNCLOUD_FILES_EXTERNAL_ALLOW_NEW_LOCAL=
+OWNCLOUD_FORWARDED_FOR_HEADERS=
+OWNCLOUD_HASHING_COST=
+OWNCLOUD_HAS_INTERNET_CONNECTION=
+OWNCLOUD_HTACCESS_REWRITE_BASE=/
+OWNCLOUD_INTEGRITY_EXCLUDED_FILES=
+OWNCLOUD_INTEGRITY_IGNORE_MISSING_APP_SIGNATURE=
+OWNCLOUD_KNOWLEDGEBASE_ENABLED=
+OWNCLOUD_LICENSE_KEY=
+OWNCLOUD_LOGIN_ALTERNATIVES=
+OWNCLOUD_LOG_DATE_FORMAT=
+OWNCLOUD_LOG_FILE=/mnt/data/files/owncloud.log
+OWNCLOUD_LOG_LEVEL=2
+OWNCLOUD_LOG_ROTATE_SIZE=
+OWNCLOUD_LOG_TIMEZONE=
+OWNCLOUD_LOST_PASSWORD_LINK=
+OWNCLOUD_MAIL_DOMAIN=
+OWNCLOUD_MAIL_FROM_ADDRESS=
+OWNCLOUD_MAIL_SMTP_AUTH=
+OWNCLOUD_MAIL_SMTP_AUTH_TYPE=
+OWNCLOUD_MAIL_SMTP_DEBUG=
+OWNCLOUD_MAIL_SMTP_HOST=
+OWNCLOUD_MAIL_SMTP_MODE=
+OWNCLOUD_MAIL_SMTP_NAME=
+OWNCLOUD_MAIL_SMTP_PASSWORD=
+OWNCLOUD_MAIL_SMTP_PORT=
+OWNCLOUD_MAIL_SMTP_SECURE=
+OWNCLOUD_MAIL_SMTP_TIMEOUT=
+OWNCLOUD_MAINTENANCE=
+OWNCLOUD_MARKETPLACE_CA=
+OWNCLOUD_MARKETPLACE_KEY=
+OWNCLOUD_MAX_EXECUTION_TIME=3600
+OWNCLOUD_MAX_FILESIZE_ANIMATED_GIFS_PUBLIC_SHARING=
+OWNCLOUD_MAX_INPUT_TIME=3600
+OWNCLOUD_MAX_UPLOAD=20G
+OWNCLOUD_MEMCACHED_ENABLED=false
+OWNCLOUD_MEMCACHED_HOST=memcached
+OWNCLOUD_MEMCACHED_OPTIONS=
+OWNCLOUD_MEMCACHED_PORT=11211
+OWNCLOUD_MEMCACHE_LOCAL=\OC\Memcache\APCu
+OWNCLOUD_MEMCACHE_LOCKING=
+OWNCLOUD_MINIMUM_SUPPORTED_DESKTOP_VERSION=
+OWNCLOUD_MOUNT_FILE=
+OWNCLOUD_MYSQL_UTF8MB4=
+OWNCLOUD_OBJECTSTORE_AUTOCREATE=true
+OWNCLOUD_OBJECTSTORE_BUCKET=owncloud
+OWNCLOUD_OBJECTSTORE_CLASS=OCA\ObjectStore\S3
+OWNCLOUD_OBJECTSTORE_ENABLED=false
+OWNCLOUD_OBJECTSTORE_ENDPOINT=xxxxxxxxxxx
+OWNCLOUD_OBJECTSTORE_KEY=
+OWNCLOUD_OBJECTSTORE_PATHSTYLE=false
+OWNCLOUD_OBJECTSTORE_REGION=xxxxxxxxxx
+OWNCLOUD_OBJECTSTORE_SECRET=
+OWNCLOUD_OBJECTSTORE_VERSION=2006-03-01
+OWNCLOUD_OPERATION_MODE=
+OWNCLOUD_OVERWRITE_CLI_URL=http://127.0.0.1/
+OWNCLOUD_OVERWRITE_COND_ADDR=
+OWNCLOUD_OVERWRITE_HOST=
+OWNCLOUD_OVERWRITE_PROTOCOL=
+OWNCLOUD_OVERWRITE_WEBROOT=
+OWNCLOUD_PART_FILE_IN_STORAGE=
+OWNCLOUD_POST_CRONJOB_PATH=/etc/post_cronjob.d
+OWNCLOUD_POST_INSTALL_PATH=/etc/post_install.d
+OWNCLOUD_POST_SERVER_PATH=/etc/post_server.d
+OWNCLOUD_PREVIEW_LIBREOFFICE_PATH=
+OWNCLOUD_PREVIEW_MAX_FILESIZE_IMAGE=
+OWNCLOUD_PREVIEW_MAX_SCALE_FACTOR=
+OWNCLOUD_PREVIEW_MAX_X=
+OWNCLOUD_PREVIEW_MAX_Y=
+OWNCLOUD_PREVIEW_OFFICE_CL_PARAMETERS=
+OWNCLOUD_PRE_CRONJOB_PATH=/etc/pre_cronjob.d
+OWNCLOUD_PRE_INSTALL_PATH=/etc/pre_install.d
+OWNCLOUD_PRE_SERVER_PATH=/etc/pre_server.d
+OWNCLOUD_PROTOCOL=http
+OWNCLOUD_PROXY=
+OWNCLOUD_PROXY_USERPWD=
+OWNCLOUD_QUOTA_INCLUDE_EXTERNAL_STORAGE=
+OWNCLOUD_REDIS_DB=
+OWNCLOUD_REDIS_ENABLED=true
+OWNCLOUD_REDIS_HOST=redis
+OWNCLOUD_REDIS_PASSWORD=
+OWNCLOUD_REDIS_PORT=6379
+OWNCLOUD_REDIS_TIMEOUT=
+OWNCLOUD_REMEMBER_LOGIN_COOKIE_LIFETIME=
+OWNCLOUD_SECRET=
+OWNCLOUD_SESSION_KEEPALIVE=
+OWNCLOUD_SESSION_LIFETIME=
+OWNCLOUD_SESSION_SAVE_HANDLER=files
+OWNCLOUD_SESSION_SAVE_PATH=/mnt/data/sessions
+OWNCLOUD_SHARE_FOLDER=
+OWNCLOUD_SHARING_FEDERATION_ALLOW_HTTP_FALLBACK=
+OWNCLOUD_SHARING_MANAGER_FACTORY=
+OWNCLOUD_SHOW_SERVER_HOSTNAME=
+OWNCLOUD_SINGLEUSER=
+OWNCLOUD_SKELETON_DIRECTORY=
+OWNCLOUD_SKIP_CHMOD=false
+OWNCLOUD_SKIP_CHOWN=false
+OWNCLOUD_SMB_LOGGING_ENABLE=
+OWNCLOUD_SQLITE_JOURNAL_MODE=
+OWNCLOUD_SUB_URL=/
+OWNCLOUD_SYSTEMTAGS_MANAGER_FACTORY=
+OWNCLOUD_TEMP_DIRECTORY=
+OWNCLOUD_TOKEN_AUTH_ENFORCED=
+OWNCLOUD_TRASHBIN_PURGE_LIMIT=
+OWNCLOUD_TRASHBIN_RETENTION_OBLIGATION=
+OWNCLOUD_TRUSTED_PROXIES=
+OWNCLOUD_UPDATER_SERVER_URL=
+OWNCLOUD_UPDATE_CHECKER=
+OWNCLOUD_UPGRADE_AUTOMATIC_APP_UPDATES=
+OWNCLOUD_USER_SEARCH_MIN_LENGTH=
+OWNCLOUD_VERSIONS_RETENTION_OBLIGATION=
+OWNCLOUD_VERSION_HIDE=
+OWNCLOUD_VOLUME_APPS=/mnt/data/apps
+OWNCLOUD_VOLUME_CONFIG=/mnt/data/config
+OWNCLOUD_VOLUME_FILES=/mnt/data/files
+OWNCLOUD_VOLUME_ROOT=/mnt/data
+OWNCLOUD_VOLUME_SESSIONS=/mnt/data/sessions
+PHP_ALLOWED_CLIENTS=127.0.0.1
+PHP_APC_SHM_SIZE=1M
+PHP_MEMORY_LIMIT=128M
+PHP_PING=/ping
+PHP_PM=dynamic
+PHP_PM_MAX_CHILDREN=16
+PHP_PM_MAX_REQUESTS=16384
+PHP_PM_MAX_SPARE_SERVERS=4
+PHP_PM_MIN_SPARE_SERVERS=1
+PHP_PM_START_SERVERS=1
+PHP_PONG=pong
+PHP_STATUS_PATH=/phpstatus
+REDIS_ENV_CRON_ENABLED=false
+REDIS_ENV_REDIS_DATABASES=1
+REDIS_ENV_TERM=xterm
+REDIS_ENV_TZ=New_York
+REDIS_NAME=/owncloud-lemp-test/redis
+REDIS_PORT=tcp://11.2.3.4:6379
+REDIS_PORT_6379_TCP=tcp://1.2.3.4:6379
+REDIS_PORT_6379_TCP_ADDR=1.2.3.4
+REDIS_PORT_6379_TCP_PORT=6379
+REDIS_PORT_6379_TCP_PROTO=tcp
+```

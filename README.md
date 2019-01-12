@@ -204,6 +204,7 @@ None that I am aware of.
 - [x] reverse engineer Dockerfile
 - [x] rebuild from Dockerfile
 - [x] upload image built with Dockerfile
+- [ ] remove jchaney folder after analysis and maybe re-root the master away from him
 - [ ] integrate with drone CI
 - [ ] offer SSL as frontend
 - [ ] offer SSL autoconfig with letsencrypt

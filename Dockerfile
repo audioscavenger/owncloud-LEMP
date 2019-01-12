@@ -1,7 +1,6 @@
 # Override ARG with docker build --build-arg TAG=<vresion> .
 ARG TAG=latest
 ARG INTERNAL_HTTP=8081
-ARG
 
 FROM owncloud/base:$TAG
 

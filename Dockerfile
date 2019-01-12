@@ -1,7 +1,12 @@
-FROM owncloud/base:bionic
+# Override ARG with docker build --build-arg TAG=<vresion> .
+ARG TAG=latest
+ARG INTERNAL_HTTP=8081
+ARG
+
+FROM owncloud/base:$TAG
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
-ENV OWNCLOUD_VERSION="latest" \
+ENV OWNCLOUD_VERSION="$TAG" \
     USER_LDAP_VERSION="0.11.0" \
     OWNCLOUD_IN_ROOTPATH="0" \
     OWNCLOUD_SERVERNAME="127.0.0.1"
@@ -60,6 +65,7 @@ RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /
 COPY rootfs /
 
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
+# Note: rootfs/.keep is under configs/
 COPY configs/ /
 
 # Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
@@ -84,6 +90,6 @@ RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | x
     chmod g+w /var/www/owncloud
 
 VOLUME ["/mnt/data"]
-EXPOSE 8081
+EXPOSE ${INTERNAL_HTTP}
 ENTRYPOINT ["/usr/bin/entrypoint"]
 CMD ["/usr/bin/owncloud", "server"]

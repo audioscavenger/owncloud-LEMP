@@ -61,8 +61,6 @@ ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION
 RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
     /bin/tar -xzf /var/www/owncloud/apps/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/owncloud/apps/user_ldap.tar.gz
 
-COPY rootfs /
-
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 # Note: rootfs/.keep is under configs/
 COPY configs/ /

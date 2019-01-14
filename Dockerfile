@@ -2,10 +2,10 @@
 ARG TAG=latest
 ARG INTERNAL_HTTP=8081
 
-FROM owncloud/base:$TAG
+FROM owncloud/base:${TAG}
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
-ENV OWNCLOUD_VERSION="$TAG" \
+ENV OWNCLOUD_VERSION=${TAG} \
     USER_LDAP_VERSION="0.11.0" \
     OWNCLOUD_IN_ROOTPATH="0" \
     OWNCLOUD_SERVERNAME="127.0.0.1"
@@ -14,9 +14,19 @@ LABEL maintainer="audioscavenger <dev@derewonko.com>" \
   org.label-schema.name="ownCloud Server LEMP" \
   org.label-schema.vendor="ownCloud GmbH" \
   org.label-schema.schema-version="1.0"
-LABEL com.github.audioscavenger.owncloud.version="$OWNCLOUD_VERSION" \
+LABEL com.github.audioscavenger.owncloud.version="${OWNCLOUD_VERSION}" \
   com.github.audioscavenger.owncloud.license="AGPL-3.0" \
   com.github.audioscavenger.owncloud.url="https://github.com/audioscavenger/owncloud-lemp"
+
+# ADD local compressed files will unzip them but cannot be automated by docker hub:
+#ADD owncloud-*.tar.bz2 /var/www/
+#ADD user_ldap.tar.gz /var/www/owncloud/apps/
+
+# ADD downloaded compressed files will NOT unzip them:
+ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
+ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz /var/www/owncloud/apps/user_ldap.tar.gz
+RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
+    /bin/tar -xzf /var/www/owncloud/apps/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/owncloud/apps/user_ldap.tar.gz
 
 RUN DEBIAN_FRONTEND=noninteractive ;\
 apt-get update && \
@@ -50,16 +60,6 @@ geoip-database \
 libgeoip1 && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# ADD local compressed files will unzip them but cannot be automated by docker hub:
-#ADD owncloud-*.tar.bz2 /var/www/
-#ADD user_ldap.tar.gz /var/www/owncloud/apps/
-
-# ADD downloaded compressed files will NOT unzip them:
-ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
-ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz /var/www/owncloud/apps/user_ldap.tar.gz
-RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
-    /bin/tar -xzf /var/www/owncloud/apps/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/owncloud/apps/user_ldap.tar.gz
 
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 # Note: rootfs/.keep is under configs/

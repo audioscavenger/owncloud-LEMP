@@ -5,8 +5,8 @@ ARG INTERNAL_HTTP=8081
 FROM owncloud/base:${TAG}
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
-ENV OWNCLOUD_VERSION=${TAG} \
-    USER_LDAP_VERSION="0.11.0" \
+ENV OWNCLOUD_VERSION=${TAG:-latest}
+ENV USER_LDAP_VERSION="0.11.0" \
     OWNCLOUD_IN_ROOTPATH="0" \
     OWNCLOUD_SERVERNAME="127.0.0.1"
 

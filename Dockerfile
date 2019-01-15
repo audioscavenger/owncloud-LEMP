@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Override ARG with docker build --build-arg TAG=<vresion> .
 ARG TAG=latest
 ARG INTERNAL_HTTP=8081
@@ -17,35 +16,15 @@ ENV TERM xterm
 LABEL maintainer="audioscavenger <dev@derewonko.com>" \
   org.label-schema.name="ownCloud Server LEMP" \
   org.label-schema.vendor="lesmoules" \
-=======
-FROM owncloud/php:latest
-
-LABEL maintainer="ownCloud DevOps <devops@owncloud.com>" \
-  org.label-schema.name="ownCloud Base" \
-  org.label-schema.vendor="ownCloud GmbH" \
->>>>>>> owncloud/master
   org.label-schema.schema-version="1.0"
 
 VOLUME ["/mnt/data"]
 
-EXPOSE 8080
+EXPOSE ${INTERNAL_HTTP:-8081}
 
 ENTRYPOINT ["/usr/bin/entrypoint"]
 CMD ["/usr/bin/owncloud", "server"]
 
-
-WORKDIR /var/www/owncloud
-RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
-    chmod g+w /var/www/owncloud
-
-EXPOSE ${INTERNAL_HTTP}
-ENTRYPOINT ["/usr/bin/entrypoint"]
-CMD ["/usr/bin/owncloud", "server"]
-=======
-EXPOSE 8080
-
-ENTRYPOINT ["/usr/bin/entrypoint"]
-CMD ["/usr/bin/owncloud", "server"]
 
 RUN apt-get update -y && \
   apt-get upgrade -y && \
@@ -62,4 +41,5 @@ WORKDIR /var/www/owncloud
 
 RUN chgrp root /etc/apache2/sites-enabled/default.conf /etc/php/7.2/mods-available/owncloud.ini && \
   chmod g+w /etc/apache2/sites-enabled/default.conf /etc/php/7.2/mods-available/owncloud.ini
->>>>>>> owncloud/master
+RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
+    chmod g+w /var/www/owncloud

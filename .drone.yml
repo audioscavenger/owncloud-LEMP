@@ -1,6 +1,11 @@
 workspace:
+<<<<<<< HEAD
   base: /drone
   path: src/github.com/audioscavenger/owncloud-lemp
+=======
+  base: /var/www
+  path: base
+>>>>>>> owncloud/master
 
 branches:
   - master
@@ -12,17 +17,29 @@ clone:
 
 pipeline:
   tarball:
+<<<<<<< HEAD
     image: plugins/download:1
+=======
+    image: plugins/download:latest
+>>>>>>> owncloud/master
     pull: true
     secrets: [ download_username, download_password ]
     source: https://download.owncloud.org/community/owncloud-10.0.10.tar.bz2
     sha256: a2efe484678c1659b9640ea247746a2174d77870d29c7d60abd565c20eb5aa84
 
+<<<<<<< HEAD
   ldap:
     image: plugins/download:1
     pull: true
     source: https://github.com/owncloud/user_ldap/releases/download/v0.11.0/user_ldap.tar.gz
     sha256: f89b4ea5b519f30b2ceefca2cca82af5f961dc04c29dea2a7c477b1d11f1c303
+=======
+  extract:
+    image: owncloud/ubuntu:latest
+    pull: true
+    commands:
+      - tar -xjf owncloud-10.0.10.tar.bz2 -C /var/www
+>>>>>>> owncloud/master
 
   wait:
     image: owncloud/ubuntu:latest
@@ -36,7 +53,7 @@ pipeline:
     environment:
       - DOCKER_HOST=tcp://docker:2375
     commands:
-      - docker build -t audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} .
+      - docker build -t owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} .
 
   server:
     image: toolhippie/docker:latest
@@ -45,14 +62,23 @@ pipeline:
     environment:
       - DOCKER_HOST=tcp://docker:2375
     commands:
+<<<<<<< HEAD
       - docker run -p 8001:8081 audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+=======
+      - docker run -p 8000:8080 -v /var/www/owncloud:/var/www/owncloud owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+>>>>>>> owncloud/master
 
   test:
     image: owncloud/ubuntu:latest
     pull: true
     commands:
+<<<<<<< HEAD
       - wait-for-it -t 600 docker:8001
       - curl -sSf http://docker:8001/status.php
+=======
+      - wait-for-it -t 600 docker:8000
+      - curl -sSf http://docker:8000/status.php
+>>>>>>> owncloud/master
 
   prepublish:
     image: toolhippie/docker:latest
@@ -61,26 +87,42 @@ pipeline:
     environment:
       - DOCKER_HOST=tcp://docker:2375
     commands:
+<<<<<<< HEAD
       - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
       - docker push audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
     when:
       event: [ push, pull_request ]
+=======
+      - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - docker push owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+    when:
+      event: [ push ]
+>>>>>>> owncloud/master
 
   clair:
     image: toolhippie/klar:latest
     pull: true
+<<<<<<< HEAD
     secrets:
       - source: docker_username
         target: docker_user
       - source: docker_password
         target: docker_password
+=======
+>>>>>>> owncloud/master
     environment:
       - CLAIR_ADDR=clair.owncloud.com
       - CLAIR_OUTPUT=High
     commands:
+<<<<<<< HEAD
       - klar audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
     when:
       event: [ push, pull_request ]
+=======
+      - klar owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}
+    when:
+      event: [ push ]
+>>>>>>> owncloud/master
 
   publish:
     image: toolhippie/docker:latest
@@ -89,6 +131,7 @@ pipeline:
     environment:
       - DOCKER_HOST=tcp://docker:2375
     commands:
+<<<<<<< HEAD
       - echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
       - docker tag audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} audioscavenger/owncloud-lemp:latest
       - docker push audioscavenger/owncloud-lemp:latest
@@ -100,6 +143,13 @@ pipeline:
       - docker push audioscavenger/owncloud-lemp:10.0.10-$(date '+%Y%m%d')
       - docker tag audioscavenger/owncloud-lemp:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} audioscavenger/owncloud-lemp:10.0
       - docker push audioscavenger/owncloud-lemp:10.0
+=======
+      - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      - docker tag owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} owncloud/base:latest
+      - docker push owncloud/base:latest
+      - docker tag owncloud/base:${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER} owncloud/base:latest-$(date '+%Y%m%d')
+      - docker push owncloud/base:latest-$(date '+%Y%m%d')
+>>>>>>> owncloud/master
     when:
       event: [ push ]
 
@@ -110,9 +160,15 @@ pipeline:
     commands:
       - |
         TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'"$DOCKER_USERNAME"'", "password": "'"$DOCKER_PASSWORD"'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+<<<<<<< HEAD
         curl -sSf -o /dev/null -H "Authorization: JWT $TOKEN" -H "Content-Type: application/json" -X DELETE https://hub.docker.com/v2/repositories/audioscavenger/owncloud-lemp/tags/${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}/
     when:
       event: [ push, pull_request ]
+=======
+        curl --fail -o /dev/null -H "Authorization: JWT $TOKEN" -H "Content-Type: application/json" -X DELETE https://hub.docker.com/v2/repositories/owncloud/base/tags/${DRONE_COMMIT_SHA}-${DRONE_BUILD_NUMBER}/
+    when:
+      event: [ push ]
+>>>>>>> owncloud/master
       status: [ success, failure ]
 
   microbadger:
@@ -135,4 +191,8 @@ pipeline:
 
 services:
   docker:
+<<<<<<< HEAD
     image: docker:18.04-dind
+=======
+    image: docker:18.04-dind
+>>>>>>> owncloud/master

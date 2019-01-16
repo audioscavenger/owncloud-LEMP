@@ -22,7 +22,7 @@ VOLUME ["/mnt/data"]
 
 RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php && \
 mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions && \
-chown -R www-data:www-data /var/www /mnt/data &/var/log/nginx /var/run/php && \
+chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php && \
 chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
 chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
 chsh -s /bin/bash www-data

@@ -47,7 +47,8 @@ RUN /bin/rm -f /var/log/*log* && \
     /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
     chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
     chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
-    /bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc /usr/bin/server
+    /bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc && \
+    /bin/chmod 755 /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server
 
 
 WORKDIR /var/www/owncloud

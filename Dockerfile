@@ -23,8 +23,6 @@ VOLUME ["/mnt/data"]
 RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php && \
 mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions && \
 chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php && \
-chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
-chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
 chsh -s /bin/bash www-data
 
 # ADD local compressed files will unzip them but cannot be automated by docker hub:
@@ -47,6 +45,8 @@ RUN /bin/rm -f /var/log/*log* && \
     /bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
     /bin/ln -sf /etc/environment /etc/default/php-fpm7.2 && \
     /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
+    chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
+    chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
     /bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc /usr/bin/server.*
 
 

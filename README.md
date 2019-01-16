@@ -2,9 +2,9 @@
 Managed by [audioscavenger/owncloud-lemp](https://github.com/audioscavenger/owncloud-lemp)
 
 ## Presentation
-This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it is built from their base container. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB and Redis containers.
+This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a clean, lightweight ubuntu base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
 
-It features Nginx instead of apache2, which has been uninstalled from the image.
+It features Nginx + PHP-fpm instead of apache2 + PHP-cli.
 
 It is currently best used as a **backend** as only HTTP is enabled.
 
@@ -142,21 +142,7 @@ docker build -t <whatever>/owncloud-lemp:<tag> .
 * [Github maintainer](https://github.com/audioscavenger/owncloud-lemp)
 
 # Modifications from the official build
-## Packages removed:
-* apache2:
-  * apache2-bin
-  * apache2-data
-  * apache2-dbg
-  * apache2-dev
-  * apache2-doc
-  * apache2-ssl-dev
-  * apache2-suexec-custom
-  * apache2-suexec-pristine
-  * apache2-utils
-* vim
-
 ## Packages added:
-* net-tools
 * software-properties-common
 * nvi
 * nginx-extras
@@ -164,31 +150,29 @@ docker build -t <whatever>/owncloud-lemp:<tag> .
 * php-fpm
 * php7.2-fpm
 
+## Files modified:
+* /usr/bin/server
+* /root/.bashrc
+* /etc/bash.bashrc
+* /etc/entrypoint.d/10-base.sh
+* /etc/templates/owncloud.ini
+* /etc/php/7.2/fpm/pool.d/www.conf
+* /etc/nginx/sites-available/default
+* /var/www/owncloud/.user.ini
+
 ## Files added:
-* /usr/bin/server.apache2
-* /usr/bin/server.nginx
+* /etc/entrypoint.d/45-php.sh
+* /etc/entrypoint.d/99-nginx.sh
 * /etc/owncloud.d/46-php-fpm.sh
 * /etc/owncloud.d/51-nginx.sh
-* /etc/entrypoint.d/99-nginx.sh
-* /etc/entrypoint.d/99-php.sh
-* /etc/php/7.2/fpm/conf.d/99-owncloud.ini
-
+* /etc/templates/default
+* /etc/templates/nginx.conf
+* /etc/templates/www.custom.conf
 * /var/www/html/apcu.php
 * /var/www/html/environ.php
 * /var/www/html/op-ocp.php
 * /var/www/html/phpinfo.php
 
-## Files modified:
-* /root/.bashrc
-* /etc/bash.bashrc
-* /etc/entrypoint.d/10-base.sh
-* /etc/templates/owncloud.ini
-* /usr/bin/server
-
-* /etc/php/7.2/fpm/pool.d/www.conf
-* /etc/php/7.2/fpm/pool.d/www.custom.conf
-* /etc/nginx/sites-available/default
-* /var/www/owncloud/.user.ini
 
 # Notes
 ## Problems
@@ -204,8 +188,10 @@ None that I am aware of.
 - [x] reverse engineer Dockerfile
 - [x] rebuild from Dockerfile
 - [x] upload image built with Dockerfile
-- [ ] remove jchaney folder after analysis and maybe re-root the master away from him
-- [ ] integrate with drone CI
+- [x] remove jchaney folder
+- [ ] update Vagrantfile and check what it actually is
+- [ ] update docker-compose.yml
+- [ ] integrate with drone CI + .drone.yml
 - [ ] offer SSL as frontend
 - [ ] offer SSL autoconfig with letsencrypt
 
@@ -214,7 +200,8 @@ This project is distributed under [GNU Affero General Public License, Version 3]
 
 # Debug and Variables list
 ## Entrypoint
-* /usr/bin/owncloud
+* ENTRYPOINT ["/usr/bin/entrypoint"]
+* CMD ["/usr/bin/owncloud", "server"]
 
 ## Environment
 All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.

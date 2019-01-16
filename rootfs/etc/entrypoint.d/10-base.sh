@@ -4,7 +4,7 @@ declare -x OWNCLOUD_PROTOCOL
 [[ -z "${OWNCLOUD_PROTOCOL}" ]] && OWNCLOUD_PROTOCOL="http"
 
 declare -x OWNCLOUD_DOMAIN
-[[ -z "${OWNCLOUD_DOMAIN}" ]] && OWNCLOUD_DOMAIN="localhost"
+[[ -z "${OWNCLOUD_DOMAIN}" ]] && OWNCLOUD_DOMAIN="127.0.0.1"
 
 declare -x OWNCLOUD_DEBUG
 [[ -z "${OWNCLOUD_DEBUG}" ]] && OWNCLOUD_DEBUG=""

@@ -18,8 +18,8 @@ then
   done
 fi
 
-echo "Starting apache daemon..."
-exec apachectl -f /etc/apache2/apache2.conf -DFOREGROUND
+echo "Starting nginx daemon..."
+exec /usr/sbin/nginx -g "daemon off; master_process on;"
 
 if [[ -d "${OWNCLOUD_POST_SERVER_PATH}" ]]
 then
@@ -28,3 +28,4 @@ then
     source ${FILE}
   done
 fi
+

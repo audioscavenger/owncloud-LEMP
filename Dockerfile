@@ -20,10 +20,10 @@ ENV TERM xterm
 
 VOLUME ["/mnt/data"]
 
-RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php && \
-mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions && \
-chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php && \
-chsh -s /bin/bash www-data
+RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
+&& mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions \
+&& chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php \
+&& chsh -s /bin/bash www-data
 
 # ADD local compressed files will unzip them but cannot be automated by docker hub:
 #ADD owncloud-*.tar.bz2 /var/www/
@@ -31,9 +31,11 @@ chsh -s /bin/bash www-data
 
 # ADD downloaded compressed files will NOT unzip them:
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
-ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz /var/www/owncloud/apps/user_ldap.tar.gz
-RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
-    /bin/tar -xzf /var/www/owncloud/apps/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/owncloud/apps/user_ldap.tar.gz
+ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz /var/www/user_ldap.tar.gz
+
+# this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image
+# RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
+    # /bin/tar -xzf /var/www/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/user_ldap.tar.gz
 
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 COPY rootfs/ /
@@ -41,19 +43,20 @@ COPY rootfs/ /
 
 # each CMD = one temporary container!
 # Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
-RUN /bin/rm -f /var/log/*log* && \
-    /bin/ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime && \
-    /bin/ln -sf /etc/environment /etc/default/php-fpm7.2 && \
-    /bin/ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini && \
-    chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
-    chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini && \
-    /bin/chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc && \
-    /bin/chmod 755 /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server
+RUN rm -f /var/log/*log* \
+&& ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime \
+&& ln -sf /etc/environment /etc/default/php-fpm7.2 \
+&& ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini \
+&& chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini \
+&& chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini \
+&& chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc \
+&& chown root:root /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server \
+&& chmod 755 /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server
 
 
 WORKDIR /var/www/owncloud
-RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root && \
-chmod g+w /var/www/owncloud
+RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root \
+&& chmod g+w /var/www/owncloud
 
 EXPOSE ${INTERNAL_HTTP:-8081}
 ENTRYPOINT ["/usr/bin/entrypoint"]

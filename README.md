@@ -123,16 +123,23 @@ audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 ## Follow logs
 `docker logs -f ${OWNCLOUD_NAME}`
 
-## Connect to it
+## Connect a terminal
 `docker exec -it ${OWNCLOUD_NAME} bash`
+
+## URLs available
+* ownCloud server: http://localhost:8001
+
+URL below can be disabled by creating the container with `-e NGINX_ENABLE_TEST_URL=false \`
+* APCu stats: http://localhost:8001/apcu.php
+* OP cache status: http://localhost:8001/op-ocp.php
+* Environ variables: http://localhost:8001/environ.php
+* PHP info: http://localhost:8001/phpinfo.php
 
 # Built it yourself
 ```
 git clone https://github.com/audioscavenger/owncloud-lemp
 cd owncloud-lemp
-wget https://download.owncloud.org/community/owncloud-10.0.10.tar.bz2
-wget https://github.com/owncloud/user_ldap/releases/download/v0.11.0/user_ldap.tar.gz
-docker build -t <whatever>/owncloud-lemp:<tag> .
+docker build -t [whateverId/]owncloud-lemp[:tag] .
 ```
 
 # Useful resources
@@ -199,7 +206,7 @@ None that I am aware of.
 This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].
 
 # Debug and Variables list
-## Entrypoint
+## Entrypoint & Startup
 * ENTRYPOINT ["/usr/bin/entrypoint"]
 * CMD ["/usr/bin/owncloud", "server"]
 

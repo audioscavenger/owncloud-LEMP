@@ -119,6 +119,7 @@ audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 ```
 
 **Production**: disable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=false \`
+**DEBUG**: enable debug with `-e DEBUG=true \`
 
 ## Follow logs
 `docker logs -f ${OWNCLOUD_NAME}`

@@ -48,15 +48,16 @@ RUN rm -f /var/log/*log* \
 && ln -sf /etc/environment /etc/default/php-fpm7.2 \
 && ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini \
 && chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini \
-&& chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini \
+&& chmod g+w /etc/environment /etc/php/7.2/mods-available/owncloud.ini /var/www/owncloud \
 && chmod 755 /etc/owncloud.d/* /etc/entrypoint.d/* /root/.bashrc \
 && chown root:root /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server \
 && chmod 755 /usr/bin/cronjob /usr/bin/entrypoint /usr/bin/healthcheck /usr/bin/occ /usr/bin/owncloud /usr/bin/server
 
 
 WORKDIR /var/www/owncloud
-RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root \
-&& chmod g+w /var/www/owncloud
+# this is duplicate with /etc/owncloud.d/25-chown.sh
+# RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root \
+# && chmod g+w /var/www/owncloud
 
 EXPOSE ${INTERNAL_HTTP:-8081}
 ENTRYPOINT ["/usr/bin/entrypoint"]

@@ -4,9 +4,9 @@ Managed by [audioscavenger/owncloud-lemp](https://github.com/audioscavenger/ownc
 Based on [audioscavenger/ubuntu-lemp](https://github.com/audioscavenger/ubuntu-lemp)
 
 ## Presentation
-This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a clean, lightweight ubuntu base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
+This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a *clean*, **lightweight** ubuntu latest base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
 
-It features Nginx + PHP-fpm instead of apache2 + PHP-cli.
+It features Nginx + PHP-fpm instead of apache2 + PHP-cli. Current image size = 639MB instead of 1.17GB.
 
 It is currently best used as a **backend** as only HTTP is enabled.
 

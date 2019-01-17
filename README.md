@@ -211,8 +211,8 @@ This project is distributed under [GNU Affero General Public License, Version 3]
 
 # Debug and Variables list
 ## Entrypoint & Startup
-* ENTRYPOINT ["/usr/bin/entrypoint"]
-* CMD ["/usr/bin/owncloud", "server"]
+* ENTRYPOINT ["/usr/bin/entrypoint"]  - loads environment from /etc/entrypoint.d/*
+* CMD ["/usr/bin/owncloud", "server"] - actual image startup
 
 ## Environment
 All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.

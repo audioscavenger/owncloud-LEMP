@@ -1,6 +1,8 @@
 # ownCloud:LEMP Stack
 Managed by [audioscavenger/owncloud-lemp](https://github.com/audioscavenger/owncloud-lemp)
 
+Based on [audioscavenger/ubuntu-lemp](https://github.com/audioscavenger/ubuntu-lemp)
+
 ## Presentation
 This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a clean, lightweight ubuntu base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
 

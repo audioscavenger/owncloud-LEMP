@@ -31,10 +31,12 @@ declare -x NGINX_PID_FILE
 [[ -z "${NGINX_PID_FILE}" ]] && NGINX_PID_FILE="/var/run/nginx.pid"
 
 declare -x NGINX_DEFAULT_ACCESS_LOG
-[[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/var/log/nginx/access.log"
+# [[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/var/log/nginx/access.log"
+[[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/dev/stdout"
 
 declare -x NGINX_DEFAULT_ERROR_LOG
-[[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/var/log/nginx/error.log"
+# [[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/var/log/nginx/error.log"
+[[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/dev/stderr"
 
 declare -x NGINX_ACCESS_LOG
 [[ -z "${NGINX_ACCESS_LOG}" ]] && NGINX_ACCESS_LOG="off"

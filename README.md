@@ -1,14 +1,20 @@
 # ownCloud:LEMP Stack
 Managed by [audioscavenger/owncloud-lemp](https://github.com/audioscavenger/owncloud-lemp)
 
+Based on [audioscavenger/ubuntu-lemp](https://github.com/audioscavenger/ubuntu-lemp)
+
 ## Presentation
-This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a clean, lightweight ubuntu base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
+This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/owncloud/server) image for the community edition, it was built from their base container but now is based from a *clean*, **lightweight** ubuntu latest base + nginx + php7.2-fpm. This ownCloud image is designed to work with a data volume in the host filesystem and with separate MariaDB **and** Redis containers.
 
-It features Nginx + PHP-fpm instead of apache2 + PHP-cli.
+It features Nginx + PHP-fpm instead of apache2 + PHP-cli. Current image size = 639MB instead of 1.17GB.
 
-It is currently best used as a **backend** as only HTTP is enabled.
+### Usage
+The *only* way that makes sense it to use it as a **backend**, as only HTTP is enabled by default.
 
-Note: "LEMP" is a language abuse as MySQL is not included in this image.
+Using it as a frontend is possible with domain certificates but then how do you do to have more than one application listen to 80/443? This is not possible and requires either using ip aliasing on the host, or having different ports per container/application + a reverse proxy at the front, which defeats the purpose of enabling SSL in the container.
+
+### Notes
+* "LEMP" is a language abuse as MySQL is not included in this image.
 
 # Features
 * **Superfast**
@@ -34,17 +40,19 @@ Note: "LEMP" is a language abuse as MySQL is not included in this image.
 
 * **Cutting Edge**
   * Based on Ubuntu 18.04
-  * Automatic check & download of latest ownCloud version
+  * Automatic check if latest ownCloud version
+  * Automatic init of Redis and MySQL databases
 
 * **Best Practices**
   * Every last configuration has a variable attached
-  * Rebuild configuration files at each startup
+  * Rebuild configuration files at startup
   * Easy filesystem management if you use docker volumes as shown
   * Brain-dean network management with linked containers as shown
+  * CloudFlare redirect resolution for client logging
 
 
 ## Content
-+ owncloud/base:bionic <-- owncloud/php <-- ubuntu:18.04
+- BASE audioscavenger/ubuntu-lemp <-- ubuntu:18.04
 - owncloud:latest (10.0.10)
 - nginx-extras
 - php7.2-fpm (128MB default)
@@ -53,10 +61,15 @@ Note: "LEMP" is a language abuse as MySQL is not included in this image.
 # How to use it
 Just follow the official instructions found at [Github - owncloud-docker/server](https://github.com/owncloud-docker/server).
 
-Remember that this container will currently serve HTTP only and must be used as a backend. You need to proxify it:
+## As a Back-End
+By default this container **must** be used as a backend. You need to proxify it:
 
-host-Web-Server --> proxy_pass --> http://127.0.0.1:8001/
+DNS --> host_ip --> host-Web-Server:443 --> proxy_pass --> http://127.0.0.1:8001/
 
+## As a Front-End
+The nginx configuration files and init scripts are ready to accept SSL certificates, but I really don't see the point. It's just offered as a possibility.
+
+DNS --> host_ip --> container:80/443
 
 # Launch with plain docker
 The use of docker volumes is highly recommended. It's so much easier than linking to actual host folders and you can always access the files anyway.
@@ -65,39 +78,41 @@ The use of docker volumes is highly recommended. It's so much easier than linkin
 ```
 docker volume create owncloud_redis-test
 
-REDIS_NAME=redis-test
+REDIS_NAME=redis
 docker run -d --name ${REDIS_NAME} \
 -e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
 -e REDIS_DATABASES=1 \
---volume owncloud_redis-test:/var/lib/redis \
+--volume owncloud_redis:/var/lib/redis \
 webhippie/redis:latest
 
-docker volume create owncloud_mysql-test
-docker volume create owncloud_backup-test
+docker volume create owncloud_mysql
+docker volume create owncloud_backup
 
-MARIADB_NAME=mariadb-test
+MARIADB_NAME=mariadb
 docker run -d --name ${MARIADB_NAME} \
 -e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
 -e MARIADB_ROOT_PASSWORD=owncloud \
 -e MARIADB_USERNAME=owncloud \
 -e MARIADB_PASSWORD=owncloud \
 -e MARIADB_DATABASE=owncloud \
---volume owncloud_mysql-test:/var/lib/mysql \
---volume owncloud_backup-test:/var/lib/backup \
+--volume owncloud_mysql:/var/lib/mysql \
+--volume owncloud_backup:/var/lib/backup \
 webhippie/mariadb:latest
 ```
 
 ## Install owncloud-lemp
+### As a Back-End
+
 ```
 docker volume create owncloud_files-test
 
-OWNCLOUD_NAME=owncloud-lemp-test
+OWNCLOUD_NAME=owncloud-lemp
 OWNCLOUD_VERSION=latest
 OWNCLOUD_DOMAIN=127.0.0.1
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin
 NGINX_PORT=8001     # use whatever host port you like here
-OWNCLOUD_VOLUME=owncloud_files-test
+OWNCLOUD_VOLUME=owncloud_files
 
 docker run -d --name ${OWNCLOUD_NAME} \
 --link ${MARIADB_NAME}:db \
@@ -120,19 +135,74 @@ audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 
 **Production**: disable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=false \`
 
+**DEBUG**: enable debug with `-e DEBUG=true \`
+
+### As a Front-End
+Again, not recommended unless the container is the only one application listening to 80/443 on your host.
+
+#### Certificate files
+* Place them under `<local-owncloud-volume>/_data/ssl/` (`/mnt/data/ssl/` in the container)
+* Certificate name: `${NGINX_SERVER_NAME}.crt`
+* Certificate key name: `${NGINX_SERVER_NAME}.key`
+
+#### Container parameters
+You will have to pass the domain name, server name, HTTP and HTTPS listen ports during container creation to activate HTTPS (yes it's automatic):
+
+```
+docker volume create owncloud_files
+
+OWNCLOUD_NAME=owncloud-lemp
+OWNCLOUD_VERSION=latest
+OWNCLOUD_DOMAIN=domain.example.com
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+NGINX_LISTEN=80
+NGINX_LISTEN_SSL=443
+OWNCLOUD_VOLUME=owncloud_files
+
+docker run -d --name ${OWNCLOUD_NAME} \
+--link ${MARIADB_NAME}:db \
+--link ${REDIS_NAME}:redis \
+-p 80:${NGINX_LISTEN} \
+-p 443:${NGINX_LISTEN_SSL} \
+-e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
+-e OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN} \
+-e NGINX_SERVER_NAME=${OWNCLOUD_DOMAIN}
+-e OWNCLOUD_DB_TYPE=mysql \
+-e OWNCLOUD_DB_NAME=owncloud \
+-e OWNCLOUD_DB_USERNAME=owncloud \
+-e OWNCLOUD_DB_PASSWORD=owncloud \
+-e OWNCLOUD_DB_HOST=db \
+-e OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME} \
+-e OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD} \
+-e OWNCLOUD_REDIS_ENABLED=true \
+-e OWNCLOUD_REDIS_HOST=${REDIS_NAME} \
+--volume ${OWNCLOUD_VOLUME}:/mnt/data \
+audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
+```
+
+*WARNING* This has not been tested yet but I garantee a 99% chance it works as expected.
+
 ## Follow logs
 `docker logs -f ${OWNCLOUD_NAME}`
 
-## Connect to it
+## Connect a terminal
 `docker exec -it ${OWNCLOUD_NAME} bash`
+
+## URLs available
+* ownCloud server: http://localhost:8001
+
+URL below can be disabled by creating the container with `-e NGINX_ENABLE_TEST_URL=false \`
+* APCu stats: http://localhost:8001/apcu.php
+* OP cache status: http://localhost:8001/op-ocp.php
+* Environ variables: http://localhost:8001/environ.php
+* PHP info: http://localhost:8001/phpinfo.php
 
 # Built it yourself
 ```
 git clone https://github.com/audioscavenger/owncloud-lemp
 cd owncloud-lemp
-wget https://download.owncloud.org/community/owncloud-10.0.10.tar.bz2
-wget https://github.com/owncloud/user_ldap/releases/download/v0.11.0/user_ldap.tar.gz
-docker build -t <whatever>/owncloud-lemp:<tag> .
+docker build -t [whateverId/]owncloud-lemp[:tag] .
 ```
 
 # Useful resources
@@ -199,9 +269,9 @@ None that I am aware of.
 This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].
 
 # Debug and Variables list
-## Entrypoint
-* ENTRYPOINT ["/usr/bin/entrypoint"]
-* CMD ["/usr/bin/owncloud", "server"]
+## Entrypoint & Startup
+* ENTRYPOINT ["/usr/bin/entrypoint"]  - loads environment from /etc/entrypoint.d/*
+* CMD ["/usr/bin/owncloud", "server"] - actual image startup
 
 ## Environment
 All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.
@@ -233,6 +303,7 @@ NGINX_ENTRYPOINT_INITIALIZED=true
 NGINX_ERROR_LOG=off
 NGINX_KEEP_ALIVE_TIMEOUT=65
 NGINX_LISTEN=8081
+NGINX_LISTEN_SSL=
 NGINX_LOG_FORMAT=combined
 NGINX_LOG_LEVEL=crit
 NGINX_PID_FILE=/var/run/nginx.pid

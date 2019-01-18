@@ -8,9 +8,13 @@ This is a **fork** from official [ownCloud/server](https://hub.docker.com/r/ownc
 
 It features Nginx + PHP-fpm instead of apache2 + PHP-cli. Current image size = 639MB instead of 1.17GB.
 
-It is currently best used as a **backend** as only HTTP is enabled.
+### Usage
+The *only* way that makes sense it to use it as a **backend**, as only HTTP is enabled by default.
 
-Note: "LEMP" is a language abuse as MySQL is not included in this image.
+Using it as a frontend is possible with domain certificates but then how do you do to have more than one application listen to 80/443? This is not possible and requires either using ip aliasing on the host, or having different ports per container/application + a reverse proxy at the front, which defeats the purpose of enabling SSL in the container.
+
+### Notes
+* "LEMP" is a language abuse as MySQL is not included in this image.
 
 # Features
 * **Superfast**
@@ -55,10 +59,15 @@ Note: "LEMP" is a language abuse as MySQL is not included in this image.
 # How to use it
 Just follow the official instructions found at [Github - owncloud-docker/server](https://github.com/owncloud-docker/server).
 
-Remember that this container will currently serve HTTP only and must be used as a backend. You need to proxify it:
+## As a Back-End
+By default this container **must** be used as a backend. You need to proxify it:
 
-host-Web-Server --> proxy_pass --> http://127.0.0.1:8001/
+DNS --> host_ip --> host-Web-Server:443 --> proxy_pass --> http://127.0.0.1:8001/
 
+## As a Front-End
+The nginx configuration files and init scripts are ready to accept SSL certificates, but I really don't see the point. It's just offered as a possibility.
+
+DNS --> host_ip --> container:80/443
 
 # Launch with plain docker
 The use of docker volumes is highly recommended. It's so much easier than linking to actual host folders and you can always access the files anyway.
@@ -67,39 +76,41 @@ The use of docker volumes is highly recommended. It's so much easier than linkin
 ```
 docker volume create owncloud_redis-test
 
-REDIS_NAME=redis-test
+REDIS_NAME=redis
 docker run -d --name ${REDIS_NAME} \
 -e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
 -e REDIS_DATABASES=1 \
---volume owncloud_redis-test:/var/lib/redis \
+--volume owncloud_redis:/var/lib/redis \
 webhippie/redis:latest
 
-docker volume create owncloud_mysql-test
-docker volume create owncloud_backup-test
+docker volume create owncloud_mysql
+docker volume create owncloud_backup
 
-MARIADB_NAME=mariadb-test
+MARIADB_NAME=mariadb
 docker run -d --name ${MARIADB_NAME} \
 -e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
 -e MARIADB_ROOT_PASSWORD=owncloud \
 -e MARIADB_USERNAME=owncloud \
 -e MARIADB_PASSWORD=owncloud \
 -e MARIADB_DATABASE=owncloud \
---volume owncloud_mysql-test:/var/lib/mysql \
---volume owncloud_backup-test:/var/lib/backup \
+--volume owncloud_mysql:/var/lib/mysql \
+--volume owncloud_backup:/var/lib/backup \
 webhippie/mariadb:latest
 ```
 
 ## Install owncloud-lemp
+### As a Back-End
+
 ```
 docker volume create owncloud_files-test
 
-OWNCLOUD_NAME=owncloud-lemp-test
+OWNCLOUD_NAME=owncloud-lemp
 OWNCLOUD_VERSION=latest
 OWNCLOUD_DOMAIN=127.0.0.1
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin
 NGINX_PORT=8001     # use whatever host port you like here
-OWNCLOUD_VOLUME=owncloud_files-test
+OWNCLOUD_VOLUME=owncloud_files
 
 docker run -d --name ${OWNCLOUD_NAME} \
 --link ${MARIADB_NAME}:db \
@@ -123,6 +134,52 @@ audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 **Production**: disable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=false \`
 
 **DEBUG**: enable debug with `-e DEBUG=true \`
+
+### As a Front-End
+Again, not recommended unless the container is the only one application listening to 80/443 on your host.
+
+#### Certificate files
+* Place them under `<local-owncloud-volume>/_data/ssl/` (`/mnt/data/ssl/` in the container)
+* Certificate name: `${NGINX_SERVER_NAME}.crt`
+* Certificate key name: `${NGINX_SERVER_NAME}.key`
+
+#### Container parameters
+You will have to pass the domain name, server name, HTTP and HTTPS listen ports during container creation to activate HTTPS (yes it's automatic):
+
+```
+docker volume create owncloud_files
+
+OWNCLOUD_NAME=owncloud-lemp
+OWNCLOUD_VERSION=latest
+OWNCLOUD_DOMAIN=domain.example.com
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+NGINX_LISTEN=80
+NGINX_LISTEN_SSL=443
+OWNCLOUD_VOLUME=owncloud_files
+
+docker run -d --name ${OWNCLOUD_NAME} \
+--link ${MARIADB_NAME}:db \
+--link ${REDIS_NAME}:redis \
+-p 80:${NGINX_LISTEN} \
+-p 443:${NGINX_LISTEN_SSL} \
+-e TZ=`ls -la /etc/localtime | cut -d/ -f7-9` \
+-e OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN} \
+-e NGINX_SERVER_NAME=${OWNCLOUD_DOMAIN}
+-e OWNCLOUD_DB_TYPE=mysql \
+-e OWNCLOUD_DB_NAME=owncloud \
+-e OWNCLOUD_DB_USERNAME=owncloud \
+-e OWNCLOUD_DB_PASSWORD=owncloud \
+-e OWNCLOUD_DB_HOST=db \
+-e OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME} \
+-e OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD} \
+-e OWNCLOUD_REDIS_ENABLED=true \
+-e OWNCLOUD_REDIS_HOST=${REDIS_NAME} \
+--volume ${OWNCLOUD_VOLUME}:/mnt/data \
+audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
+```
+
+*WARNING* This has not been tested yet but I garantee a 99% chance it works as expected.
 
 ## Follow logs
 `docker logs -f ${OWNCLOUD_NAME}`
@@ -244,6 +301,7 @@ NGINX_ENTRYPOINT_INITIALIZED=true
 NGINX_ERROR_LOG=off
 NGINX_KEEP_ALIVE_TIMEOUT=65
 NGINX_LISTEN=8081
+NGINX_LISTEN_SSL=
 NGINX_LOG_FORMAT=combined
 NGINX_LOG_LEVEL=crit
 NGINX_PID_FILE=/var/run/nginx.pid

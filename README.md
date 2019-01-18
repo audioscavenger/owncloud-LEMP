@@ -40,17 +40,19 @@ Using it as a frontend is possible with domain certificates but then how do you 
 
 * **Cutting Edge**
   * Based on Ubuntu 18.04
-  * Automatic check & download of latest ownCloud version
+  * Automatic check if latest ownCloud version
+  * Automatic init of Redis and MySQL databases
 
 * **Best Practices**
   * Every last configuration has a variable attached
-  * Rebuild configuration files at each startup
+  * Rebuild configuration files at startup
   * Easy filesystem management if you use docker volumes as shown
   * Brain-dean network management with linked containers as shown
+  * CloudFlare redirect resolution for client logging
 
 
 ## Content
-+ owncloud/base:bionic <-- owncloud/php <-- ubuntu:18.04
+- BASE audioscavenger/ubuntu-lemp <-- ubuntu:18.04
 - owncloud:latest (10.0.10)
 - nginx-extras
 - php7.2-fpm (128MB default)

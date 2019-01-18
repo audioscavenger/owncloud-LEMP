@@ -262,8 +262,8 @@ None that I am aware of.
 - [ ] update Vagrantfile and check what it actually is
 - [ ] update docker-compose.yml
 - [ ] integrate with drone CI + .drone.yml
-- [ ] offer SSL as frontend
-- [ ] offer SSL autoconfig with letsencrypt
+- [x] offer SSL as frontend
+- [x] offer SSL autoconfig with letsencrypt CANCELLED why would anyone do that?
 
 ## License
 This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].

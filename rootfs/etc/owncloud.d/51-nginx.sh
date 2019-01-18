@@ -7,7 +7,7 @@ gomplate \
 
 echo "Writing nginx default site..."
 gomplate \
-  -f /etc/templates/default \
+  -f /etc/templates/default${NGINX_LISTEN_SSL:+.ssl} \
   -o /etc/nginx/sites-available/default
 
 true

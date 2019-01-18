@@ -9,14 +9,74 @@ server {
   listen {{.Env.NGINX_LISTEN}};
   server_name {{.Env.NGINX_SERVER_NAME}};
 
+  ## For SSL certificate verifications, this needs to be served via HTTP
+  location /.well-known/(acme-challenge|pki-validation)/ {
+      root /var/www/html; # Specify here where the challenge file is placed
+  }
+
+  ## enforce https
+  location / {
+      return 301 https://$server_name$request_uri;
+  }
+}
+
+server {
+  listen {{.Env.NGINX_LISTEN_SSL}} ssl http2;
+  server_name {{.Env.NGINX_SERVER_NAME}};
+
   ## Path to the root of your installation
   root {{.Env.NGINX_ROOT}};
-
+  
   ## Add index.php to the list if you are using PHP
   index index.php index.html index.htm index.nginx-debian.html;
 
+  ## by default OWNCLOUD_VOLUME_ROOT=/mnt/data
+  ssl_certificate {{.Env.OWNCLOUD_VOLUME_ROOT}}/ssl/{{.Env.NGINX_SERVER_NAME}}.crt;
+  ssl_certificate_key {{.Env.OWNCLOUD_VOLUME_ROOT}}/ssl/{{.Env.NGINX_SERVER_NAME}}.key;
+
+  # Example SSL/TLS configuration. Please read into the manual of NGINX before applying these.
+  # ssl_session_timeout 5m;
+  # ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  # ssl_ciphers "-ALL:EECDH+AES256:EDH+AES256:AES256-SHA:EECDH+AES:EDH+AES:!ADH:!NULL:!aNULL:!eNULL:!EXPORT:!LOW:!MD5:!3DES:!PSK:!SRP:!DSS:!AESGCM:!RC4";
+  # ssl_dhparam /etc/nginx/dh4096.pem;
+  # ssl_prefer_server_ciphers on;
+  # keepalive_timeout    70;
+  # ssl_stapling on;
+  # ssl_stapling_verify on;
+  
+  ## ----------------------------------------------------------------------
+  ## | SSL policy - Modern + h5bp settings                                |
+  ## ----------------------------------------------------------------------
+  ssl_session_timeout 5m;
+  ssl_protocols TLSv1.2;
+  ssl_ciphers EECDH+CHACHA20:EECDH+AES;
+  ssl_ecdh_curve X25519:prime256v1:secp521r1:secp384r1;
+  ssl_dhparam /etc/nginx/dh4096.pem;
+  ssl_prefer_server_ciphers on;
+  keepalive_timeout    300s;
+  
+  ssl_stapling on;
+  ssl_stapling_verify on;
+  resolver 1.1.1.1 1.1.0.0 8.8.8.8 8.8.4.4 valid=60s;
+  resolver_timeout 2s;
+  
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 24h;
+  ssl_session_tickets off;
+
+  ## Add headers to serve security related headers
+  ## The always parameter ensures that the header is set for all responses, including internally generated error responses.
+  ## Before enabling Strict-Transport-Security headers please read into this topic first.
+  ## https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/
+  #add_header Strict-Transport-Security "max-age=15552000; includeSubDomains; preload" always;
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header X-XSS-Protection "1; mode=block" always;
+  add_header X-Robots-Tag none always;
+  add_header X-Download-Options noopen always;
+  add_header X-Permitted-Cross-Domain-Policies none always;
+
   ## For Lets Encrypt, this needs to be served via HTTP
-  ## You can specify a different root for where the challenge file is placed
   location /.well-known/acme-challenge/ {
     root {{.Env.NGINX_ROOT_ACME_CHALLENGE}}; # Specify here where the challenge file is placed
   }
@@ -96,13 +156,13 @@ server {
     fastcgi_param SCRIPT_NAME $fastcgi_script_name; # necessary for owncloud to detect the contextroot https://github.com/owncloud/core/blob/v10.0.0/lib/private/AppFramework/Http/Request.php#L603
     fastcgi_param PATH_INFO $fastcgi_path_info;
     ## enable for HTTPS only:
-    #fastcgi_param HTTPS on;
-    fastcgi_param modHeadersAvailable true; ## Avoid sending the security headers twice
+    fastcgi_param HTTPS on;
+    fastcgi_param modHeadersAvailable true; #Avoid sending the security headers twice
     fastcgi_param front_controller_active true;
-    fastcgi_read_timeout 180; ## increase default timeout e.g. for long running carddav/ caldav syncs with 1000+ entries
+    fastcgi_read_timeout 180; # increase default timeout e.g. for long running carddav/ caldav syncs with 1000+ entries
     fastcgi_pass php-handler;
     fastcgi_intercept_errors on;
-    fastcgi_request_buffering off; ## Available since NGINX 1.7.11
+    fastcgi_request_buffering off; #Available since NGINX 1.7.11
   }
 
   location ~ ^/(?:updater|ocs-provider)(?:$|/) {

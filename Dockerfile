@@ -21,7 +21,7 @@ ENV TERM xterm
 VOLUME ["/mnt/data"]
 
 RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
-&& mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions \
+&& mkdir -p /mnt/data/files /mnt/data/config /mnt/data/certs /mnt/data/sessions /mnt/data/ssl \
 && chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php \
 && chsh -s /bin/bash www-data
 

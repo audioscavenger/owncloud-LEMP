@@ -32,7 +32,7 @@ RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
 
 # ADD downloaded compressed files will NOT unzip them:
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
-ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap.tar.gz
+ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap-${USER_LDAP_VERSION}.tar.gz
 
 # this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image
 # RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \

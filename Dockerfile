@@ -1,4 +1,4 @@
-# Override ARG with docker build --build-arg TAG=<vresion> .
+## Override ARG with docker build --build-arg TAG=<vresion> .
 ARG TAG=latest
 ARG INTERNAL_HTTP=8081
 
@@ -26,24 +26,24 @@ RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
 && chown -R www-data:www-data /var/www /mnt/data /var/log/nginx /var/run/php \
 && chsh -s /bin/bash www-data
 
-# ADD local compressed files will unzip them but cannot be automated by docker hub:
+## ADD local compressed files will unzip them but cannot be automated by docker hub:
 #ADD owncloud-*.tar.bz2 /var/www/
 #ADD user_ldap.tar.gz /var/www/owncloud/apps/
 
-# ADD downloaded compressed files will NOT unzip them:
+## ADD downloaded compressed files will NOT unzip them:
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
-ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap-${USER_LDAP_VERSION}.tar.gz
+ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap.tar.gz
 
-# this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image
+## this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image
 # RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
-    # /bin/tar -xzf /var/www/user_ldap-${USER_LDAP_VERSION}.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/user_ldap-${USER_LDAP_VERSION}.tar.gz
+    # /bin/tar -xzf /var/www/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/user_ldap.tar.gz
 
 # https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
 COPY rootfs/ /
 
 
-# each CMD = one temporary container!
-# Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
+## each CMD = one temporary container!
+## Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
 RUN rm -f /var/log/*log* \
 && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
 && ln -sf /etc/environment /etc/default/php-fpm7.2 \
@@ -56,7 +56,7 @@ RUN rm -f /var/log/*log* \
 
 
 WORKDIR /var/www/owncloud
-# this is duplicate with /etc/owncloud.d/25-chown.sh
+## this is duplicate with /etc/owncloud.d/25-chown.sh
 # RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root \
 # && chmod g+w /var/www/owncloud
 

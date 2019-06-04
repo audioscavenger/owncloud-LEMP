@@ -11,12 +11,13 @@ LABEL maintainer="audioscavenger <dev@derewonko.com>" \
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
 ENV OWNCLOUD_VERSION=${TAG:-latest}
-ENV USER_LDAP_VERSION="0.11.0" \
+ENV USER_LDAP_VERSION="0.13.0" \
     OWNCLOUD_IN_ROOTPATH="0" \
     OWNCLOUD_SERVERNAME="127.0.0.1"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm
+ENV TZ=America/New_York
 
 VOLUME ["/mnt/data"]
 
@@ -44,7 +45,7 @@ COPY rootfs/ /
 # each CMD = one temporary container!
 # Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
 RUN rm -f /var/log/*log* \
-&& ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime \
+&& ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
 && ln -sf /etc/environment /etc/default/php-fpm7.2 \
 && ln -sf /etc/php/7.2/mods-available/owncloud.ini /etc/php/7.2/fpm/conf.d/99-owncloud.ini \
 && chgrp root /etc/environment /etc/php/7.2/mods-available/owncloud.ini \

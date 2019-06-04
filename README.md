@@ -76,7 +76,7 @@ The use of docker volumes is highly recommended. It's so much easier than linkin
 
 ## Install Mariadb + Redis
 ```
-docker volume create owncloud_redis-test
+docker volume create owncloud_redis
 
 REDIS_NAME=redis
 docker run -d --name ${REDIS_NAME} \
@@ -104,14 +104,14 @@ webhippie/mariadb:latest
 ### As a Back-End
 
 ```
-docker volume create owncloud_files-test
+docker volume create owncloud_files
 
 OWNCLOUD_NAME=owncloud-lemp
 OWNCLOUD_VERSION=latest
 OWNCLOUD_DOMAIN=127.0.0.1
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin
-NGINX_PORT=8001     # use whatever host port you like here
+NGINX_PORT=8001     # use whatever docker host port you like here
 OWNCLOUD_VOLUME=owncloud_files
 
 docker run -d --name ${OWNCLOUD_NAME} \
@@ -262,8 +262,8 @@ None that I am aware of.
 - [ ] update Vagrantfile and check what it actually is
 - [ ] update docker-compose.yml
 - [ ] integrate with drone CI + .drone.yml
-- [x] offer SSL as frontend
-- [x] offer SSL autoconfig with letsencrypt CANCELLED why would anyone do that?
+- [ ] offer SSL frontend
+- [ ] offer SSL autoconfig with letsencrypt for a dedicated container on port 80/443
 
 ## License
 This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].
@@ -272,6 +272,15 @@ This project is distributed under [GNU Affero General Public License, Version 3]
 ## Entrypoint & Startup
 * ENTRYPOINT ["/usr/bin/entrypoint"]  - loads environment from /etc/entrypoint.d/*
 * CMD ["/usr/bin/owncloud", "server"] - actual image startup
+
+## Dependencies
+
+See dockerfile for more details
+
+* docker image audioscavenger/ubuntu-lemp:latest
+* [owncloud/user_ldap 0.13.0](https://github.com/owncloud/user_ldap/releases/)
+* [ownCloud tarball latest](https://download.owncloud.org/community/owncloud-latest.tar.bz2) (10.2.0 as of 2019/05/20)
+
 
 ## Environment
 All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.
@@ -286,13 +295,14 @@ DB_ENV_MARIADB_ROOT_PASSWORD=owncloud
 DB_ENV_MARIADB_USERNAME=owncloud
 DB_ENV_TERM=xterm
 DB_ENV_TZ=New_York
-DB_NAME=/owncloud-lemp-test/db
+DB_NAME=/owncloud-lemp/db
 DB_PORT=tcp://1.2.3.4:3306
 DB_PORT_3306_TCP=tcp://1.2.3.4:3306
 DB_PORT_3306_TCP_ADDR=1.2.3.4
 DB_PORT_3306_TCP_PORT=3306
 DB_PORT_3306_TCP_PROTO=tcp
 LANG=C
+TZ=America/New_York
 NGINX_ACCESS_LOG=off
 NGINX_DEFAULT_ACCESS_LOG=/var/log/nginx/access.log
 NGINX_DEFAULT_ERROR_LOG=/var/log/nginx/error.log
@@ -495,7 +505,7 @@ REDIS_ENV_CRON_ENABLED=false
 REDIS_ENV_REDIS_DATABASES=1
 REDIS_ENV_TERM=xterm
 REDIS_ENV_TZ=New_York
-REDIS_NAME=/owncloud-lemp-test/redis
+REDIS_NAME=/owncloud-lemp/redis
 REDIS_PORT=tcp://11.2.3.4:6379
 REDIS_PORT_6379_TCP=tcp://1.2.3.4:6379
 REDIS_PORT_6379_TCP_ADDR=1.2.3.4

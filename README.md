@@ -245,8 +245,9 @@ docker build -t [whateverId/]owncloud-lemp[:tag] .
 
 
 # Notes
+
 ## Problems
-None that I am aware of.
+- [x] with v0.13.0 they changed the naming format of the tarball to user_ldap-${USER_LDAP_VERSION}.tar.gz
 
 ## Todo List
 - [x] install software

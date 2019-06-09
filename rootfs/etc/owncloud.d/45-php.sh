@@ -8,11 +8,11 @@ gomplate \
 echo "Writing php config..."
 gomplate \
   -f /etc/templates/owncloud.ini \
-  -o /etc/php/7.2/mods-available/owncloud.ini
+  -o /etc/php/${PHP_VERSION_MAIN}/mods-available/owncloud.ini
 
 echo "Writing php www.custom.conf..."
 gomplate \
   -f /etc/templates/www.custom.conf \
-  -o /etc/php/7.2/fpm/pool.d/www.custom.conf
+  -o /etc/php/${PHP_VERSION_MAIN}/fpm/pool.d/www.custom.conf
 
 true

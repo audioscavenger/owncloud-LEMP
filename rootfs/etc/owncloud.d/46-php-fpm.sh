@@ -18,17 +18,20 @@ then
   done
 fi
 
-echo "Creating php7.2-fpm environ..."
-/usr/bin/env | /usr/bin/awk -F= '/OWNCLOUD/ {print "export "$1"=\""$2"\""}' >/etc/default/php-fpm7.2 && /bin/chmod 755 /etc/default/php-fpm7.2
+echo "Miscellaneous optimizations"
+echo opcache.validate_timestamps=0 >>/etc/php/${PHP_VERSION_MAIN}/fpm/php.ini
 
-echo "Starting php7.2-fpm daemon..."
-# /usr/sbin/php-fpm7.2 --force-stderr --daemonize
-# /usr/sbin/service php7.2-fpm stop
-# /usr/sbin/php-fpm7.2
+echo "Creating php${PHP_VERSION_MAIN}-fpm environ..."
+/usr/bin/env | /usr/bin/awk -F= '/OWNCLOUD/ {print "export "$1"=\""$2"\""}' >/etc/default/php-fpm${PHP_VERSION_MAIN} && /bin/chmod 755 /etc/default/php-fpm${PHP_VERSION_MAIN}
+
+echo "Starting php${PHP_VERSION_MAIN}-fpm daemon..."
+# /usr/sbin/php-fpm${PHP_VERSION_MAIN} --force-stderr --daemonize
+# /usr/sbin/service php${PHP_VERSION_MAIN}-fpm stop
+# /usr/sbin/php-fpm${PHP_VERSION_MAIN}
 # Note: it is NOT possible to keep the environment when using service to start a daemon.
 # System files would have to be modified which is not acceptable.
-# Therefore, the trick is to link /etc/default/php-fpm7.2 to /etc/environment
-/usr/sbin/service php7.2-fpm restart
+# Therefore, the trick is to link /etc/default/php-fpm${PHP_VERSION_MAIN} to /etc/environment
+/usr/sbin/service php${PHP_VERSION_MAIN}-fpm restart
 
 if [[ -d "${OWNCLOUD_POST_SERVER_PATH}" ]]
 then

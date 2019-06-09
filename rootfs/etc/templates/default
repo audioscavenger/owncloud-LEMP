@@ -2,7 +2,7 @@
 ## The configuration assumes that ownCloud is installed in /var/www/owncloud and is accessed via http(s)://cloud.example.com.
 
 upstream php-handler {
-  server unix:/var/run/php/php7.2-fpm.sock;
+  server unix:/var/run/php/php{{.Env.PHP_VERSION_MAIN}}-fpm.sock;
 }
 
 server {

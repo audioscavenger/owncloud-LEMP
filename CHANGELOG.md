@@ -1,5 +1,36 @@
 # Changelog
 
+## 2019-06-09
+
+* Fixed
+  * LEMP_VERSION and OWNCLOUD_VERSION tags are separated
+* Added
+  * ARG LEMP_VERSION=latest
+  * ARG OWNCLOUD_VERSION=latest
+  * ENV PHP_VERSION_MAIN=7.2
+  * USER_LDAP_VERSION_NEW conditional
+  * disable opcache revalidate
+* Changed
+  * use ENV for every version downloads
+  * use apt-get only to avoid useless terminal warnings
+  * nginx default log = off
+  * apcu, opcache and phpinfo disabled by default (production)
+  * NGINX_DEFAULT_ACCESS_LOG
+  * NGINX_DEFAULT_ERROR_LOG
+  * user_ldap tarball name format from version with RUN if-then-else
+  * rootfs\etc\entrypoint.d\70-logging.sh
+  * rootfs\etc\entrypoint.d\98-overwrite.sh
+  * rootfs\etc\entrypoint.d\99-nginx.sh
+  * rootfs\etc\owncloud.d\46-php-fpm.sh
+  * rootfs\etc\owncloud.d\45-php.sh
+  * etc/templates/default
+  * etc/templates/default.ssl
+* Removed
+  * ENV PHP_VERSION_MAIN for scripting automation
+  * rearranged RUN commands order and content for optimized install speed
+  * NGINX_ACCESS_LOG_LOCATION
+  * NGINX_ERROR_LOG_LOCATION
+
 ## 2018-12-17
 
 * Fixed

@@ -54,9 +54,17 @@ Using it as a frontend is possible with domain certificates but then how do you 
 ## Content
 - BASE audioscavenger/ubuntu-lemp <-- ubuntu:18.04
 - owncloud:latest (10.0.10)
-- nginx-extras
+- nginx-extras 1.14
 - php7.2-fpm (128MB default)
 - APCu (1MB shm size default)
+
+## Dependencies
+
+See dockerfile for more details
+
+* docker image audioscavenger/ubuntu-lemp:latest
+* [owncloud/user_ldap 0.13.0](https://github.com/owncloud/user_ldap/releases/)
+* [ownCloud tarball latest](https://download.owncloud.org/community/owncloud-latest.tar.bz2) (10.2.0 as of 2019/05/20)
 
 # How to use it
 Just follow the official instructions found at [Github - owncloud-docker/server](https://github.com/owncloud-docker/server).
@@ -64,7 +72,7 @@ Just follow the official instructions found at [Github - owncloud-docker/server]
 ## As a Back-End
 By default this container **must** be used as a backend. You need to proxify it:
 
-DNS --> host_ip --> host-Web-Server:443 --> proxy_pass --> http://127.0.0.1:8001/
+DNS --> host_ip --> host-Web-Server:443 --> proxy_pass --> http://127.0.0.1:8001/ (8001 or whatever port you setup)
 
 ## As a Front-End
 The nginx configuration files and init scripts are ready to accept SSL certificates, but I really don't see the point. It's just offered as a possibility.
@@ -101,6 +109,12 @@ webhippie/mariadb:latest
 ```
 
 ## Install owncloud-lemp
+Default mode: **Production** = environ.php, phpinfo, apcu.php and op-ocp.php are *disabled*.
+
+**Staging**: Enable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=true \`
+
+**DEBUG**: enable debug with `-e DEBUG=true \`
+
 ### As a Back-End
 
 ```
@@ -111,7 +125,7 @@ OWNCLOUD_VERSION=latest
 OWNCLOUD_DOMAIN=127.0.0.1
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin
-NGINX_PORT=8001     # use whatever docker host port you like here
+NGINX_PORT=8001     # use whatever docker exposed port you like here
 OWNCLOUD_VOLUME=owncloud_files
 
 docker run -d --name ${OWNCLOUD_NAME} \
@@ -132,10 +146,6 @@ docker run -d --name ${OWNCLOUD_NAME} \
 --volume ${OWNCLOUD_VOLUME}:/mnt/data \
 audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 ```
-
-**Production**: disable access to environ.php, phpinfo, apcu.php and op-ocp.php by adding `-e NGINX_ENABLE_TEST_URL=false \`
-
-**DEBUG**: enable debug with `-e DEBUG=true \`
 
 ### As a Front-End
 Again, not recommended unless the container is the only one application listening to 80/443 on your host.
@@ -184,26 +194,88 @@ audioscavenger/owncloud-lemp:${OWNCLOUD_VERSION}
 *WARNING* This has not been tested yet but I garantee a 99% chance it works as expected.
 
 ## Follow logs
+
+### Container logs
+* Follow everything that's logging to stdout and stderr:
 `docker logs -f ${OWNCLOUD_NAME}`
+
+* Anything that's logging to /mnt/data/ can be found on the host in the volume path:
+`/<installdir>/docker/volumes/owncloud_files/_data/`
+
+
+### Owncloud logs
+* By default, owncloud log to /mnt/data/files/owncloud.log
+* By default, severity = 2 = WARN
+* Change owncloud log severity at container creation with `-e OWNCLOUD_LOG_LEVEL=n`
+  * 0: DEBUG
+  * 1: INFO
+  * 2: WARN (default)
+  * 3: ERROR
+  * 4: FATAL
+
+
+### Nginx logs
+* By default, nginx logs are *disabled*
+  * Enable nginx logs at container creation with `-e NGINX_ENABLE_LOG=true`
+* If enabled, by default nginx logs go to /dev/stdout + /dev/stderr 
+  * Enable nginx logs to /mnt/data/ at container creation with `-e NGINX_DEFAULT_ACCESS_LOG=/mnt/data/access.log -e NGINX_DEFAULT_ERROR_LOG=/mnt/data/error.log`
+  * Change nginx log severity at container creation with `-e NGINX_LOG_LEVEL=level`
+    * info
+    * notice
+    * warn
+    * error (default)
+    * crit
+    * alert
+    * emerg
 
 ## Connect a terminal
 `docker exec -it ${OWNCLOUD_NAME} bash`
 
 ## URLs available
+The docker host exposed port = 8001 = example
 * ownCloud server: http://localhost:8001
+* URL below can be enabled by creating the container with `-e NGINX_ENABLE_TEST_URL=true \`
+  * APCu stats: http://localhost:8001/apcu.php
+  * OP cache status: http://localhost:8001/op-ocp.php
+  * Environ variables: http://localhost:8001/environ.php
+  * PHP info: http://localhost:8001/phpinfo.php
 
-URL below can be disabled by creating the container with `-e NGINX_ENABLE_TEST_URL=false \`
-* APCu stats: http://localhost:8001/apcu.php
-* OP cache status: http://localhost:8001/op-ocp.php
-* Environ variables: http://localhost:8001/environ.php
-* PHP info: http://localhost:8001/phpinfo.php
+# Build
+By default, LEMP_VERSION == OWNCLOUD_VERSION == latest
 
-# Built it yourself
+## build latest
 ```
 git clone https://github.com/audioscavenger/owncloud-lemp
 cd owncloud-lemp
-docker build -t [whateverId/]owncloud-lemp[:tag] .
+docker build .
 ```
+
+
+## build with Specific versions
+* Example 1: build with custom tag using OWNCLOUD_VERSION _10.2.0_ instead of _latest_ (because _latest_ points to current stable: 10.0.10):
+```
+docker build -e OWNCLOUD_VERSION=10.2.0 -t owncloud-lemp:10.2.0-rc1 .
+```
+
+* Example 2: build with custom tag using a different version FROM ubuntu-lemp _0.14-7.3_ instead of _latest_:
+```
+docker build --build-arg LEMP_VERSION=0.14-7.3 -t owncloud-lemp:test-php7.3 .
+```
+
+## Build Environment Variables
+```
+ARG LEMP_VERSION=latest
+ARG OWNCLOUD_VERSION=latest
+
+ENV USER_LDAP_VERSION "0.13.0"
+ENV OWNCLOUD_IN_ROOTPATH "0"
+ENV OWNCLOUD_SERVERNAME "127.0.0.1"
+ENV DEBIAN_FRONTEND noninteractive
+ENV TERM xterm
+ENV TZ America/New_York
+ENV INTERNAL_HTTP 8081
+```
+
 
 # Useful resources
 * [Download ownCloud Client](https://owncloud.org/download/#owncloud-desktop-client-windows)
@@ -217,8 +289,8 @@ docker build -t [whateverId/]owncloud-lemp[:tag] .
 * nvi
 * nginx-extras
 * php-apcu
-* php-fpm
 * php7.2-fpm
+* php7.2-opcache
 
 ## Files modified:
 * /usr/bin/server
@@ -246,11 +318,10 @@ docker build -t [whateverId/]owncloud-lemp[:tag] .
 
 # Notes
 
-## Problems
-- [x] with v0.13.0 they changed the naming format of the tarball to user_ldap-${USER_LDAP_VERSION}.tar.gz
-
 ## Todo List
-- [x] install software
+- [x] disable opcache revalidate
+- [ ] optimize opcache size
+- [x] with v0.13.0 they changed the naming format of the tarball to user_ldap-${USER_LDAP_VERSION}.tar.gz
 - [x] configure frontend and backend
 - [x] test bandwidth and CPU usage with different sized folders
 - [x] max file size tested = 1GB
@@ -260,6 +331,7 @@ docker build -t [whateverId/]owncloud-lemp[:tag] .
 - [x] rebuild from Dockerfile
 - [x] upload image built with Dockerfile
 - [x] remove jchaney folder
+- [ ] find free alternative to geoip-database (https://lite.ip2location.com/ ?)
 - [ ] update Vagrantfile and check what it actually is
 - [ ] update docker-compose.yml
 - [ ] integrate with drone CI + .drone.yml
@@ -274,15 +346,6 @@ This project is distributed under [GNU Affero General Public License, Version 3]
 * ENTRYPOINT ["/usr/bin/entrypoint"]  - loads environment from /etc/entrypoint.d/*
 * CMD ["/usr/bin/owncloud", "server"] - actual image startup
 
-## Dependencies
-
-See dockerfile for more details
-
-* docker image audioscavenger/ubuntu-lemp:latest
-* [owncloud/user_ldap 0.13.0](https://github.com/owncloud/user_ldap/releases/)
-* [ownCloud tarball latest](https://download.owncloud.org/community/owncloud-latest.tar.bz2) (10.2.0 as of 2019/05/20)
-
-
 ## Environment
 All the variables set are found under `/etc/entrypoint.d/`and can be overridden when creating the container with `-e VARIABLE=value`.
 
@@ -296,27 +359,22 @@ DB_ENV_MARIADB_ROOT_PASSWORD=owncloud
 DB_ENV_MARIADB_USERNAME=owncloud
 DB_ENV_TERM=xterm
 DB_ENV_TZ=New_York
-DB_NAME=/owncloud-lemp/db
-DB_PORT=tcp://1.2.3.4:3306
-DB_PORT_3306_TCP=tcp://1.2.3.4:3306
-DB_PORT_3306_TCP_ADDR=1.2.3.4
-DB_PORT_3306_TCP_PORT=3306
-DB_PORT_3306_TCP_PROTO=tcp
 LANG=C
 TZ=America/New_York
-NGINX_ACCESS_LOG=off
-NGINX_DEFAULT_ACCESS_LOG=/var/log/nginx/access.log
-NGINX_DEFAULT_ERROR_LOG=/var/log/nginx/error.log
-NGINX_ENABLED_TEST_URL=#rewrite ^ /index.php;
+
 NGINX_ENABLE_LOG=false
-NGINX_ENABLE_TEST_URL=true
-NGINX_ENTRYPOINT_INITIALIZED=true
+NGINX_LOG_LEVEL=error
+NGINX_LOG_FORMAT=combined
+NGINX_DEFAULT_ACCESS_LOG=/dev/stdout
+NGINX_DEFAULT_ERROR_LOG=/dev/stderr
+NGINX_ACCESS_LOG=off
 NGINX_ERROR_LOG=off
+NGINX_ENABLED_TEST_URL=#rewrite ^ /index.php;
+NGINX_ENABLE_TEST_URL=false
+NGINX_ENTRYPOINT_INITIALIZED=true
 NGINX_KEEP_ALIVE_TIMEOUT=65
 NGINX_LISTEN=8081
 NGINX_LISTEN_SSL=
-NGINX_LOG_FORMAT=combined
-NGINX_LOG_LEVEL=crit
 NGINX_PID_FILE=/var/run/nginx.pid
 NGINX_ROOT=/var/www/owncloud
 NGINX_ROOT_ACME_CHALLENGE=/var/www/html
@@ -326,8 +384,7 @@ NGINX_RUN_USER=www-data
 NGINX_SERVER_NAME=_
 NGINX_SERVER_SIGNATURE=Off
 NGINX_WORKER_CONNECTIONS=1024
-OLDPWD=/etc/owncloud.d
-OWNCLOUD_ACCESSLOG_LOCATION=/dev/stdout
+
 OWNCLOUD_ACCOUNTS_ENABLE_MEDIAL_SEARCH=
 OWNCLOUD_ADMIN_PASSWORD=admin
 OWNCLOUD_ADMIN_USERNAME=admin
@@ -367,7 +424,6 @@ OWNCLOUD_ENABLE_AVATARS=
 OWNCLOUD_ENABLE_CERTIFICATE_MANAGEMENT=
 OWNCLOUD_ENABLE_PREVIEWS=
 OWNCLOUD_ENTRYPOINT_INITIALIZED=true
-OWNCLOUD_ERRORLOG_LOCATION=/dev/stderr
 OWNCLOUD_EXCLUDED_DIRECTORIES=
 OWNCLOUD_FILELOCKING_ENABLED=true
 OWNCLOUD_FILELOCKING_TTL=
@@ -490,6 +546,7 @@ OWNCLOUD_VOLUME_CONFIG=/mnt/data/config
 OWNCLOUD_VOLUME_FILES=/mnt/data/files
 OWNCLOUD_VOLUME_ROOT=/mnt/data
 OWNCLOUD_VOLUME_SESSIONS=/mnt/data/sessions
+
 PHP_ALLOWED_CLIENTS=127.0.0.1
 PHP_APC_SHM_SIZE=1M
 PHP_MEMORY_LIMIT=128M
@@ -502,11 +559,11 @@ PHP_PM_MIN_SPARE_SERVERS=1
 PHP_PM_START_SERVERS=1
 PHP_PONG=pong
 PHP_STATUS_PATH=/phpstatus
+
 REDIS_ENV_CRON_ENABLED=false
 REDIS_ENV_REDIS_DATABASES=1
 REDIS_ENV_TERM=xterm
 REDIS_ENV_TZ=New_York
-REDIS_NAME=/owncloud-lemp/redis
 REDIS_PORT=tcp://11.2.3.4:6379
 REDIS_PORT_6379_TCP=tcp://1.2.3.4:6379
 REDIS_PORT_6379_TCP_ADDR=1.2.3.4

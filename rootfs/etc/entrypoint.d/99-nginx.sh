@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 declare -x NGINX_ENABLE_LOG
-[[ -z "${NGINX_ENABLE_LOG}" ]] && NGINX_ENABLE_LOG="false"
+[[ -z "${NGINX_ENABLE_LOG}" ]] && NGINX_ENABLE_LOG=false
 
 declare -x NGINX_ENABLE_TEST_URL
-[[ -z "${NGINX_ENABLE_TEST_URL}" ]] && NGINX_ENABLE_TEST_URL="true"
+[[ -z "${NGINX_ENABLE_TEST_URL}" ]] && NGINX_ENABLE_TEST_URL=false
 
 declare -x NGINX_ENABLED_TEST_URL
 ${NGINX_ENABLE_TEST_URL} && NGINX_ENABLED_TEST_URL="#rewrite ^ /index.php;" || NGINX_ENABLED_TEST_URL="rewrite ^ /index.php;"
@@ -31,28 +31,30 @@ declare -x NGINX_PID_FILE
 [[ -z "${NGINX_PID_FILE}" ]] && NGINX_PID_FILE="/var/run/nginx.pid"
 
 declare -x NGINX_DEFAULT_ACCESS_LOG
-# [[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/var/log/nginx/access.log"
+# [[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/mnt/data/access.log"
 [[ -z "${NGINX_DEFAULT_ACCESS_LOG}" ]] && NGINX_DEFAULT_ACCESS_LOG="/dev/stdout"
 
 declare -x NGINX_DEFAULT_ERROR_LOG
-# [[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/var/log/nginx/error.log"
+# [[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/mnt/data/error.log"
 [[ -z "${NGINX_DEFAULT_ERROR_LOG}" ]] && NGINX_DEFAULT_ERROR_LOG="/dev/stderr"
 
-declare -x NGINX_ACCESS_LOG
-[[ -z "${NGINX_ACCESS_LOG}" ]] && NGINX_ACCESS_LOG="off"
+declare -x NGINX_ACCESS_LOG_LOCATION
+[[ -z "${NGINX_ACCESS_LOG_LOCATION}" ]] && NGINX_ACCESS_LOG_LOCATION=${NGINX_DEFAULT_ACCESS_LOG}
 
-declare -x NGINX_ERROR_LOG
-[[ -z "${NGINX_ERROR_LOG}" ]] && NGINX_ERROR_LOG="off"
+declare -x NGINX_ERROR_LOG_LOCATION
+[[ -z "${NGINX_ERROR_LOG_LOCATION}" ]] && NGINX_ERROR_LOG_LOCATION=${NGINX_DEFAULT_ERROR_LOG}
 
 declare -x NGINX_LOG_FORMAT
 [[ -z "${NGINX_LOG_FORMAT}" ]] && NGINX_LOG_FORMAT="combined"
 
+# NGINX_LOG_LEVEL = info, notice, warn, error (default), crit, alert, and emerg
 declare -x NGINX_LOG_LEVEL
-[[ -z "${NGINX_LOG_LEVEL}" ]] && NGINX_LOG_LEVEL="crit"
+[[ -z "${NGINX_LOG_LEVEL}" ]] && NGINX_LOG_LEVEL="error"
 
+# NGINX_ACCESS_LOG and NGINX_ERROR_LOG are used in the nginx.conf template
 if ${NGINX_ENABLE_LOG}; then
-  NGINX_ACCESS_LOG="${NGINX_DEFAULT_ACCESS_LOG} ${NGINX_LOG_FORMAT}"
-  NGINX_ERROR_LOG="${NGINX_DEFAULT_ERROR_LOG} ${NGINX_LOG_LEVEL}"
+  NGINX_ACCESS_LOG="${NGINX_ACCESS_LOG_LOCATION} ${NGINX_LOG_FORMAT}"
+  NGINX_ERROR_LOG="${NGINX_ERROR_LOG_LOCATION} ${NGINX_LOG_LEVEL}"
 fi
 
 declare -x NGINX_SERVER_NAME

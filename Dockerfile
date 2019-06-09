@@ -1,23 +1,27 @@
-## Override ARG with docker build --build-arg TAG=<vresion> .
-ARG TAG=latest
-ARG INTERNAL_HTTP=8081
+## https://docs.docker.com/engine/reference/builder/
+## Override ARG with: docker build --build-arg ARGNAME=value .
+ARG LEMP_VERSION=latest
+ARG OWNCLOUD_VERSION=latest
+FROM audioscavenger/ubuntu-lemp:${LEMP_VERSION}
+ARG LEMP_VERSION
+ARG OWNCLOUD_VERSION
 
-FROM audioscavenger/ubuntu-lemp:${TAG:-latest}
+## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
+ENV LEMP_VERSION=${LEMP_VERSION:-latest} \
+    OWNCLOUD_VERSION=${OWNCLOUD_VERSION:-latest} \
+    PHP_VERSION_MAIN=7.2 \
+    USER_LDAP_VERSION "0.13.0" \
+    OWNCLOUD_IN_ROOTPATH="0" \
+    OWNCLOUD_SERVERNAME="127.0.0.1" \
+    DEBIAN_FRONTEND=noninteractive \
+    TERM=xterm \
+    TZ=America/New_York \
+    INTERNAL_HTTP=8081
 
 LABEL maintainer="audioscavenger <dev@derewonko.com>" \
   org.label-schema.name="ownCloud Server LEMP" \
   org.label-schema.vendor="lesmoules" \
   org.label-schema.schema-version="1.0"
-
-## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
-ENV OWNCLOUD_VERSION=${TAG:-latest}
-ENV USER_LDAP_VERSION="0.13.0" \
-    OWNCLOUD_IN_ROOTPATH="0" \
-    OWNCLOUD_SERVERNAME="127.0.0.1"
-
-ENV DEBIAN_FRONTEND noninteractive
-ENV TERM xterm
-ENV TZ=America/New_York
 
 VOLUME ["/mnt/data"]
 
@@ -32,18 +36,23 @@ RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
 
 ## ADD downloaded compressed files will NOT unzip them:
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
-ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap.tar.gz
+
+RUN if [ `echo ${USER_LDAP_VERSION} | cut -d. -f2` -gt 11 ]; \
+    then export USER_LDAP_VERSION_NEW=-${USER_LDAP_VERSION}; \
+    fi
+ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap${USER_LDAP_VERSION_NEW}.tar.gz /var/www/user_ldap.tar.gz
 
 ## this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image
 # RUN /bin/tar -xjf /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 -C /var/www && /bin/rm /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2 && \
     # /bin/tar -xzf /var/www/user_ldap.tar.gz -C /var/www/owncloud/apps && /bin/rm /var/www/user_ldap.tar.gz
 
-# https://stackoverflow.com/questions/30215830/dockerfile-copy-keep-subdirectory-structure
+# https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
+# ADD rootfs /
 COPY rootfs/ /
 
 
 ## each CMD = one temporary container!
-## Note: it looks like php cannot start without /run/php/ because the service doesn't create it every first time
+## Note: it looks like php cannot start without /run/php/ because the service doesn't create it on first launch
 RUN rm -f /var/log/*log* \
 && ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
 && ln -sf /etc/environment /etc/default/php-fpm7.2 \
@@ -60,6 +69,6 @@ WORKDIR /var/www/owncloud
 # RUN find /var/www/owncloud \( \! -user www-data -o \! -group root \) -print0 | xargs -r -0 chown www-data:root \
 # && chmod g+w /var/www/owncloud
 
-EXPOSE ${INTERNAL_HTTP:-8081}
+EXPOSE ${INTERNAL_HTTP}
 ENTRYPOINT ["/usr/bin/entrypoint"]
 CMD ["/usr/bin/owncloud", "server"]

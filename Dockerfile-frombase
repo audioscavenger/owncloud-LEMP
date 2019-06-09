@@ -16,7 +16,7 @@ LABEL maintainer="audioscavenger <dev@derewonko.com>" \
   org.label-schema.schema-version="1.0"
 LABEL com.github.audioscavenger.owncloud.version="${OWNCLOUD_VERSION}" \
   com.github.audioscavenger.owncloud.license="AGPL-3.0" \
-  com.github.audioscavenger.owncloud.url="https://github.com/audioscavenger/owncloud-lemp"
+  com.github.audioscavenger.owncloud.url="https://github.com/owncloud/docs"
 
 # ADD local compressed files will unzip them but cannot be automated by docker hub:
 #ADD owncloud-*.tar.bz2 /var/www/

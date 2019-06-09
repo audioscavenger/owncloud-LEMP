@@ -1,12 +1,12 @@
 ## https://docs.docker.com/engine/reference/builder/
 ## Override ARG with: docker build --build-arg ARGNAME=value .
-ARG LEMP_VERSION=latest
-FROM audioscavenger/ubuntu-lemp:${LEMP_VERSION}
 ARG LEMP_VERSION
+FROM audioscavenger/ubuntu-lemp:${LEMP_VERSION:-latest}
+ARG OWNCLOUD_VERSION
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
-ENV LEMP_VERSION=${LEMP_VERSION:-latest} \
-    OWNCLOUD_VERSION=latest \
+ENV LEMP_VERSION=${LEMP_VERSION} \
+    OWNCLOUD_VERSION=${OWNCLOUD_VERSION:-latest} \
     PHP_VERSION_MAIN=7.2 \
     USER_LDAP_VERSION="0.13.0" \
     OWNCLOUD_IN_ROOTPATH="0" \
@@ -19,7 +19,10 @@ ENV LEMP_VERSION=${LEMP_VERSION:-latest} \
 LABEL maintainer="audioscavenger <dev@derewonko.com>" \
   org.label-schema.name="ownCloud Server LEMP" \
   org.label-schema.vendor="lesmoules" \
-  org.label-schema.schema-version="1.0"
+  org.label-schema.schema-version="1.0" \
+  org.label-schema.owncloud-version="${OWNCLOUD_VERSION}" \
+  org.label-schema.owncloud-license="AGPL-3.0" \
+  org.label-schema.owncloud-docs="https://github.com/owncloud/docs"
 
 VOLUME ["/mnt/data"]
 
@@ -36,8 +39,8 @@ RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
 
 RUN if [ `echo ${USER_LDAP_VERSION} | cut -d. -f2` -gt 11 ]; \
-    then wget --no-check-certificate https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz -O /var/www/user_ldap.tar.gz; \
-    else wget --no-check-certificate https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz -O /var/www/user_ldap.tar.gz; \
+    then wget --no-check-certificate --no-verbose https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz -O /var/www/user_ldap.tar.gz; \
+    else wget --no-check-certificate --no-verbose https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz -O /var/www/user_ldap.tar.gz; \
     fi
 
 ## this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image

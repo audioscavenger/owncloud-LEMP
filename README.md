@@ -254,7 +254,7 @@ docker build .
 ## build with Specific versions
 * Example 1: build with custom tag using OWNCLOUD_VERSION _10.2.0_ instead of _latest_ (because _latest_ points to current stable: 10.0.10):
 ```
-docker build -e OWNCLOUD_VERSION=10.2.0 -t owncloud-lemp:10.2.0-rc1 .
+docker build --build-arg OWNCLOUD_VERSION=10.2.0 -t owncloud-lemp:10.2.0-rc1 .
 ```
 
 * Example 2: build with custom tag using a different version FROM ubuntu-lemp _0.14-7.3_ instead of _latest_:

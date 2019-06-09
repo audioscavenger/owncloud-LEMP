@@ -1,14 +1,12 @@
 ## https://docs.docker.com/engine/reference/builder/
 ## Override ARG with: docker build --build-arg ARGNAME=value .
 ARG LEMP_VERSION=latest
-ARG OWNCLOUD_VERSION=latest
 FROM audioscavenger/ubuntu-lemp:${LEMP_VERSION}
 ARG LEMP_VERSION
-ARG OWNCLOUD_VERSION
 
 ## Check latest version: https://github.com/owncloud/core/wiki/Maintenance-and-Release-Schedule
 ENV LEMP_VERSION=${LEMP_VERSION:-latest} \
-    OWNCLOUD_VERSION=${OWNCLOUD_VERSION:-latest} \
+    OWNCLOUD_VERSION=latest \
     PHP_VERSION_MAIN=7.2 \
     USER_LDAP_VERSION="0.13.0" \
     OWNCLOUD_IN_ROOTPATH="0" \

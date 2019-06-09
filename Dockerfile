@@ -38,8 +38,8 @@ RUN mkdir -p /var/www/html /var/www/owncloud /var/log/nginx /var/run/php \
 ADD https://download.owncloud.org/community/owncloud-${OWNCLOUD_VERSION}.tar.bz2 /var/www/owncloud-${OWNCLOUD_VERSION}.tar.bz2
 
 RUN if [ `echo ${USER_LDAP_VERSION} | cut -d. -f2` -gt 11 ]; \
-    then ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz /var/www/user_ldap.tar.gz; \
-    else ADD https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz /var/www/user_ldap.tar.gz; \
+    then wget --no-check-certificate https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap-${USER_LDAP_VERSION}.tar.gz -O /var/www/user_ldap.tar.gz; \
+    else wget --no-check-certificate https://github.com/owncloud/user_ldap/releases/download/v${USER_LDAP_VERSION}/user_ldap.tar.gz -O /var/www/user_ldap.tar.gz; \
     fi
 
 ## this moved to /etc/owncloud.d/05-unzip.sh: exec on first run = smaller image

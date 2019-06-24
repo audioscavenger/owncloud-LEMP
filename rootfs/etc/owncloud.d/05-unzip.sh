@@ -12,7 +12,6 @@ fi
 
 if [ -f /var/www/owncloud-*.tar.bz2 ]
 then
-  ls /var/www/owncloud-*.tar.bz2
   echo "Unpacking /var/www/owncloud-*.tar.bz2..."
   tar -xjf /var/www/owncloud-*.tar.bz2 -C /var/www && rm /var/www/owncloud-*.tar.bz2
 fi

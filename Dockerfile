@@ -73,3 +73,4 @@ WORKDIR /var/www/owncloud
 EXPOSE ${INTERNAL_HTTP}
 ENTRYPOINT ["/usr/bin/entrypoint"]
 CMD ["/usr/bin/owncloud", "server"]
+
